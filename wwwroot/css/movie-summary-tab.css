@@ -1,0 +1,50 @@
+﻿/* Stili per la tab del riassunto AI */
+.ai-summary-container-tab {
+    padding: 20px 0;
+}
+
+.empty-summary-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+    .empty-summary-state i {
+        font-size: 3rem;
+        color: var(--brand-color);
+        margin-bottom: 20px;
+    }
+
+    .empty-summary-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .empty-summary-state p {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 20px;
+    }
+
+#tabSummaryLoading {
+    padding: 50px 0;
+    text-align: center;
+}
+
+#tabSummaryText {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

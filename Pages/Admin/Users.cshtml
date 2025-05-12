@@ -1,0 +1,1961 @@
+﻿@page
+@model CineVerify.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Gestione Utenti";
+}
+
+<!-- Header con pulsanti di azione -->
+<div class="admin-dashboard-header">
+    <div class="header-left">
+        <h1 class="page-title">
+            <i class="bi bi-people-fill title-icon"></i>
+            @ViewData["Title"]
+        </h1>
+        <p class="text-muted">Gestisci gli utenti della piattaforma CineVerify</p>
+    </div>
+    <div class="header-actions">
+        <button type="button" class="btn btn-outline-primary btn-icon-text" data-bs-toggle="modal" data-bs-target="#exportModal">
+            <i class="bi bi-download"></i>
+            <span>Esporta dati</span>
+        </button>
+        <button type="button" class="btn btn-primary btn-icon-text" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-person-plus"></i>
+            <span>Nuovo Utente</span>
+        </button>
+    </div>
+</div>
+
+<!-- Stats Cards Row -->
+<div class="stats-cards-container">
+    <div class="stats-card">
+        <div class="stats-icon-wrapper blue">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="stats-content">
+            <div class="stats-value">@Model.UsersList.Count</div>
+            <div class="stats-label">Utenti totali</div>
+        </div>
+        <div class="stats-chart-mini">
+            <div class="chart-bar" style="height: 60%;"></div>
+            <div class="chart-bar" style="height: 40%;"></div>
+            <div class="chart-bar" style="height: 70%;"></div>
+            <div class="chart-bar" style="height: 50%;"></div>
+            <div class="chart-bar" style="height: 80%;"></div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="stats-icon-wrapper red">
+            <i class="bi bi-shield-lock"></i>
+        </div>
+        <div class="stats-content">
+            <div class="stats-value">@Model.UsersList.Count(u => u.Roles.Contains("Admin"))</div>
+            <div class="stats-label">Amministratori</div>
+        </div>
+        <div class="stats-percentage">
+            @{
+                var adminPercentage = Model.UsersList.Count > 0 
+                    ? (decimal)Model.UsersList.Count(u => u.Roles.Contains("Admin")) / Model.UsersList.Count * 100 
+                    : 0;
+            }
+            <span>@adminPercentage.ToString("0.0")%</span>
+            <div class="progress">
+                <div class="progress-bar bg-danger" role="progressbar" style="width: @adminPercentage%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-card">
+        <div class="stats-icon-wrapper green">
+            <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="stats-content">
+            <div class="stats-value">@Model.UsersList.Count(u => u.User.DataRegistrazione.Date == DateTime.Today.Date)</div>
+            <div class="stats-label">Iscritti oggi</div>
+        </div>
+        <div class="stats-trend">
+            @{
+                var yesterdayCount = Model.UsersList.Count(u => u.User.DataRegistrazione.Date == DateTime.Today.AddDays(-1).Date);
+                var todayCount = Model.UsersList.Count(u => u.User.DataRegistrazione.Date == DateTime.Today.Date);
+                var trend = yesterdayCount > 0 
+                    ? (decimal)(todayCount - yesterdayCount) / yesterdayCount * 100 
+                    : (todayCount > 0 ? 100 : 0);
+                var trendClass = trend >= 0 ? "positive" : "negative";
+                var trendIcon = trend >= 0 ? "bi-arrow-up-right" : "bi-arrow-down-right";
+            }
+            <div class="trend-value @trendClass">
+                <i class="bi @trendIcon"></i>
+                <span>@Math.Abs(trend).ToString("0.0")%</span>
+            </div>
+            <div class="trend-label">vs ieri</div>
+        </div>
+    </div>
+    
+    <!-- Nella sezione statistiche, sostituisci la card degli utenti attivi -->
+    <div class="stats-card">
+        <div class="stats-icon-wrapper purple">
+            <i class="bi bi-activity"></i>
+        </div>
+        <div class="stats-content">
+            <div class="stats-value">
+                @{
+                    // Rimuoviamo il riferimento a UltimoAccesso
+                    var verifiedUsers = Model.UsersList.Count(u => u.User.EmailConfirmed);
+                }
+                @verifiedUsers
+            </div>
+            <div class="stats-label">Utenti verificati</div>
+        </div>
+        <div class="stats-percentage">
+            @{
+                var verifiedPercentage = Model.UsersList.Count > 0
+                ? (decimal)verifiedUsers / Model.UsersList.Count * 100
+                : 0;
+            }
+            <span>@verifiedPercentage.ToString("0.0")%</span>
+            <div class="progress">
+                <div class="progress-bar bg-purple" role="progressbar" style="width: @verifiedPercentage%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert messaggi -->
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    var statusMessageClass = Model.StatusMessage.StartsWith("Errore") ? "danger" : "success";
+    var statusIcon = statusMessageClass == "danger" ? "exclamation-triangle" : "check-circle";
+    
+    <div class="alert alert-@statusMessageClass alert-dismissible fade show" role="alert">
+        <div class="alert-content">
+            <i class="bi bi-@statusIcon alert-icon"></i>
+            <div>
+                <h5 class="alert-heading">@(statusMessageClass == "danger" ? "Errore!" : "Operazione completata!")</h5>
+                <p class="mb-0">@Model.StatusMessage</p>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Main Content Card -->
+<div class="content-card">
+    <div class="content-card-header">
+        <div class="card-header-left">
+            <h2 class="card-title">
+                <i class="bi bi-table me-2"></i>
+                Elenco utenti
+            </h2>
+            <span class="records-count">@Model.UsersList.Count registrazioni</span>
+        </div>
+        
+        <!-- Search and Filter Section -->
+        <div class="card-header-actions">
+            <div class="search-container">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="usersSearch" class="search-input" placeholder="Cerca utente...">
+            </div>
+            
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-funnel"></i>
+                    <span>Filtri</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end filter-dropdown" aria-labelledby="filterDropdown">
+                    <h6 class="dropdown-header">Filtra per ruolo</h6>
+                    <div class="px-3 py-2">
+                        <div class="form-check">
+                            <input class="form-check-input filter-role" type="checkbox" value="Admin" id="filterAdmin">
+                            <label class="form-check-label" for="filterAdmin">Amministratori</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input filter-role" type="checkbox" value="User" id="filterUser">
+                            <label class="form-check-label" for="filterUser">Utenti</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input filter-role" type="checkbox" value="Critic" id="filterCritic">
+                            <label class="form-check-label" for="filterCritic">Critici</label>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <h6 class="dropdown-header">Filtra per stato</h6>
+                    <div class="px-3 py-2">
+                        <div class="form-check">
+                            <input class="form-check-input filter-status" type="checkbox" value="active" id="filterActive">
+                            <label class="form-check-label" for="filterActive">Utenti attivi</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input filter-status" type="checkbox" value="inactive" id="filterInactive">
+                            <label class="form-check-label" for="filterInactive">Utenti inattivi</label>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="d-flex justify-content-between px-3 py-2">
+                        <button type="button" id="clearFilters" class="btn btn-sm btn-light">Reset</button>
+                        <button type="button" id="applyFilters" class="btn btn-sm btn-primary">Applica</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-outline-secondary" type="button" id="refreshTable">
+                <i class="bi bi-arrow-repeat"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="content-card-body">
+        <!-- Bulk Actions -->
+        <div class="bulk-actions-container mb-3" id="bulkActionsContainer" style="display: none;">
+            <div class="bulk-actions-count">
+                <span id="selectedCount">0</span> utenti selezionati
+            </div>
+            <div class="bulk-actions-buttons">
+                <button class="btn btn-sm btn-outline-primary" id="bulkExport">
+                    <i class="bi bi-download me-1"></i>Esporta selezionati
+                </button>
+                <button class="btn btn-sm btn-outline-danger" id="bulkDelete">
+                    <i class="bi bi-trash me-1"></i>Elimina selezionati
+                </button>
+            </div>
+        </div>
+        
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-hover user-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th width="40">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAllUsers">
+                            </div>
+                        </th>
+                        <th class="sortable" data-sort="id">ID <i class="bi bi-arrow-down-up"></i></th>
+                        <th class="sortable" data-sort="nome">Nome <i class="bi bi-arrow-down-up"></i></th>
+                        <th class="sortable" data-sort="cognome">Cognome <i class="bi bi-arrow-down-up"></i></th>
+                        <th class="sortable" data-sort="email">Email <i class="bi bi-arrow-down-up"></i></th>
+                        <th>Ruoli</th>
+                        <th class="sortable" data-sort="data">Data Registrazione <i class="bi bi-arrow-down-up"></i></th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.UsersList)
+                    {
+                        var user = item.User;
+                        // Rimuoviamo il riferimento a UltimoAccesso
+                        // Ora consideriamo attivi gli utenti con email confermata
+                        var isActive = user.EmailConfirmed;
+
+                        <tr class="user-row @(isActive ? "user-active" : "user-inactive")"
+                            data-id="@user.Id"
+                            data-name="@user.Nome @user.Cognome"
+                            data-email="@user.Email"
+                            data-roles="@string.Join(",", item.Roles)">
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input user-select" type="checkbox" value="@user.Id">
+                                </div>
+                            </td>
+                            <td><span class="user-id">@user.Id</span></td>
+                            <td>@user.Nome</td>
+                            <td>@user.Cognome</td>
+                            <td>
+                                <div class="user-email">
+                                    <i class="bi bi-envelope me-1"></i>
+                                    <a href="mailto:@user.Email">@user.Email</a>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="role-badges">
+                                    @foreach (var role in item.Roles)
+                                    {
+                                        @if (role == "Admin")
+                                        {
+                                            <span class="badge role-badge admin">
+                                                <i class="bi bi-shield-lock"></i> @role
+                                            </span>
+                                        }
+                                        else if (role == "Critic")
+                                        {
+                                            <span class="badge role-badge critic">
+                                                <i class="bi bi-star"></i> @role
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge role-badge user">
+                                                <i class="bi bi-person"></i> @role
+                                            </span>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="user-date" data-bs-toggle="tooltip" title="@user.DataRegistrazione.ToString("dd/MM/yyyy HH:mm")">
+                                    <i class="bi bi-calendar2-check"></i>
+                                    <span>@user.DataRegistrazione.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-icon view-user" data-bs-toggle="tooltip" title="Visualizza dettagli"
+                                            data-user-id="@user.Id">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    
+                                    <a asp-page="./Edit" asp-route-id="@user.Id" 
+                                       class="btn btn-icon" data-bs-toggle="tooltip" title="Modifica utente">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    @if (user.Email != "admin@cineverify.com")
+                                    {
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@user.Id"
+                                              onsubmit="return confirmDelete('@user.Nome @user.Cognome');"
+                                              style="display: inline;">
+                                            <button type="submit" class="btn btn-icon delete-user"
+                                                    data-bs-toggle="tooltip" title="Elimina utente">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-icon" disabled
+                                                data-bs-toggle="tooltip" title="Account protetto">
+                                            <i class="bi bi-lock"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-state-icon">
+                <i class="bi bi-search"></i>
+            </div>
+            <h4>Nessun risultato trovato</h4>
+            <p>La ricerca non ha prodotto risultati. Prova con altri termini o criteri.</p>
+            <button type="button" class="btn btn-primary" id="resetSearch">
+                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset ricerca
+            </button>
+        </div>
+    </div>
+    
+    <div class="content-card-footer">
+        <div class="pagination-info">
+            Visualizzazione di <span id="visibleRecords">@Model.UsersList.Count</span> su <span id="totalRecords">@Model.UsersList.Count</span> utenti
+        </div>
+        
+        <div class="pagination-controls">
+            <button class="btn btn-sm btn-outline-secondary" disabled>
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="current-page">Pagina 1</span>
+            <button class="btn btn-sm btn-outline-secondary" disabled>
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per dettagli utente -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDetailsModalLabel">Dettagli utente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="user-details-container">
+                    <div class="user-avatar">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    
+                    <h3 id="modalUserName" class="mb-3">Nome Utente</h3>
+                    
+                    <div class="user-detail-item">
+                        <div class="detail-icon">
+                            <i class="bi bi-envelope"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value" id="modalUserEmail">email@example.com</div>
+                        </div>
+                    </div>
+                    
+                    <div class="user-detail-item">
+                        <div class="detail-icon">
+                            <i class="bi bi-shield"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">Ruoli</div>
+                            <div class="detail-value" id="modalUserRoles">User</div>
+                        </div>
+                    </div>
+                    
+                    <div class="user-detail-item">
+                        <div class="detail-icon">
+                            <i class="bi bi-calendar-date"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">Data registrazione</div>
+                            <div class="detail-value" id="modalUserDate">01/01/2023</div>
+                        </div>
+                    </div>
+                    
+                    <div class="user-detail-item">
+                        <div class="detail-icon">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <div class="detail-content">
+                            <div class="detail-label">Stato</div>
+                            <div class="detail-value" id="modalUserStatus">Attivo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modalEditLink" class="btn btn-primary">
+                    <i class="bi bi-pencil me-2"></i>Modifica
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per esportazione -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">Esporta dati utenti</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-4">Seleziona il formato di esportazione desiderato:</p>
+                
+                <div class="export-options">
+                    <div class="export-option">
+                        <input type="radio" name="exportFormat" id="formatCsv" value="csv" checked>
+                        <label for="formatCsv">
+                            <div class="option-icon">
+                                <i class="bi bi-filetype-csv"></i>
+                            </div>
+                            <div class="option-text">
+                                <span class="option-title">CSV</span>
+                                <span class="option-desc">File separato da virgole</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="export-option">
+                        <input type="radio" name="exportFormat" id="formatExcel" value="excel">
+                        <label for="formatExcel">
+                            <div class="option-icon">
+                                <i class="bi bi-file-earmark-excel"></i>
+                            </div>
+                            <div class="option-text">
+                                <span class="option-title">Excel</span>
+                                <span class="option-desc">File Excel XLSX</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="export-option">
+                        <input type="radio" name="exportFormat" id="formatPdf" value="pdf">
+                        <label for="formatPdf">
+                            <div class="option-icon">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </div>
+                            <div class="option-text">
+                                <span class="option-title">PDF</span>
+                                <span class="option-desc">Documento PDF</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="exportAllData" checked>
+                    <label class="form-check-label" for="exportAllData">
+                        Includi tutti i dati disponibili
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary" id="startExport">
+                    <i class="bi bi-download me-2"></i>Esporta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per creare nuovo utente -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createUserModalLabel">Crea nuovo utente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="CreateUser" id="createUserForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newUserEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="newUserEmail" name="Email" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="newUserName" class="form-label">Nome <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="newUserName" name="Nome" required>
+                        </div>
+                        <div class="col">
+                            <label for="newUserSurname" class="form-label">Cognome <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="newUserSurname" name="Cognome" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="newUserPassword" class="form-label">Password <span class="text-danger">*</span></label>
+                        <div class="password-input-group">
+                            <input type="password" class="form-control" id="newUserPassword" name="Password" required>
+                            <button type="button" class="btn btn-outline-secondary toggle-password" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength mt-2">
+                            <div class="strength-bar"></div>
+                            <span class="strength-text">Forza password</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Ruoli</label>
+                        <div class="role-selection">
+                            <div class="role-option">
+                                <input type="checkbox" name="Roles" value="User" id="roleUser" checked>
+                                <label for="roleUser">
+                                    <i class="bi bi-person"></i>
+                                    <span>Utente</span>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="checkbox" name="Roles" value="Critic" id="roleCritic">
+                                <label for="roleCritic">
+                                    <i class="bi bi-star"></i>
+                                    <span>Critico</span>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="checkbox" name="Roles" value="Admin" id="roleAdmin">
+                                <label for="roleAdmin">
+                                    <i class="bi bi-shield"></i>
+                                    <span>Admin</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="SendWelcomeEmail" checked>
+                        <label class="form-check-label" for="sendWelcomeEmail">
+                            Invia email di benvenuto
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-2"></i>Crea utente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inizializzazione tooltips
+            const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltips.forEach(tooltip => {
+                new bootstrap.Tooltip(tooltip);
+            });
+
+            // Auto-nascondi alert dopo 5 secondi
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+            
+            // Gestione ricerca utenti
+            const searchInput = document.getElementById('usersSearch');
+            const tableBody = document.querySelector('#usersTable tbody');
+            const tableRows = Array.from(tableBody.querySelectorAll('tr.user-row'));
+            const emptyState = document.getElementById('emptyState');
+            const visibleRecordsSpan = document.getElementById('visibleRecords');
+            const totalRecordsSpan = document.getElementById('totalRecords');
+            
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                let visibleCount = 0;
+                
+                tableRows.forEach(row => {
+                    const id = row.getAttribute('data-id').toLowerCase();
+                    const name = row.getAttribute('data-name').toLowerCase();
+                    const email = row.getAttribute('data-email').toLowerCase();
+                    const roles = row.getAttribute('data-roles').toLowerCase();
+                    
+                    if (id.includes(query) || name.includes(query) || email.includes(query) || roles.includes(query)) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Aggiorna conteggio e mostra/nascondi stato vuoto
+                visibleRecordsSpan.textContent = visibleCount;
+                
+                if (visibleCount === 0) {
+                    emptyState.style.display = 'flex';
+                    tableBody.style.display = 'none';
+                } else {
+                    emptyState.style.display = 'none';
+                    tableBody.style.display = '';
+                }
+            });
+            
+            // Reset ricerca
+            document.getElementById('resetSearch').addEventListener('click', function() {
+                searchInput.value = '';
+                tableRows.forEach(row => row.style.display = '');
+                emptyState.style.display = 'none';
+                tableBody.style.display = '';
+                visibleRecordsSpan.textContent = tableRows.length;
+                
+                // Reset anche i filtri
+                document.querySelectorAll('.filter-role, .filter-status').forEach(cb => {
+                    cb.checked = false;
+                });
+            });
+            
+            // Refresh tabella
+            document.getElementById('refreshTable').addEventListener('click', function() {
+                // Animazione di ricarica
+                this.classList.add('rotating');
+                setTimeout(() => {
+                    this.classList.remove('rotating');
+                    // Qui potrebbe esserci una chiamata AJAX per ricaricare i dati
+                    // Per ora simuliamo solo un refresh dell'UI
+                    searchInput.value = '';
+                    tableRows.forEach(row => row.style.display = '');
+                    emptyState.style.display = 'none';
+                    tableBody.style.display = '';
+                    visibleRecordsSpan.textContent = tableRows.length;
+                    
+                    // Mostra notifica di successo
+                    showNotification('Dati aggiornati con successo!', 'success');
+                }, 800);
+            });
+            
+            // Gestione select all checkbox
+            const selectAllCheckbox = document.getElementById('selectAllUsers');
+            const userCheckboxes = document.querySelectorAll('.user-select');
+            const bulkActionsContainer = document.getElementById('bulkActionsContainer');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            
+            selectAllCheckbox.addEventListener('change', function() {
+                const isChecked = this.checked;
+                let visibleCheckedCount = 0;
+                
+                userCheckboxes.forEach(checkbox => {
+                    const row = checkbox.closest('tr');
+                    if (row.style.display !== 'none') {
+                        checkbox.checked = isChecked;
+                        if (isChecked) visibleCheckedCount++;
+                    }
+                });
+                
+                updateBulkActions(isChecked ? visibleCheckedCount : 0);
+            });
+            
+            userCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const checkedCount = document.querySelectorAll('.user-select:checked').length;
+                    updateBulkActions(checkedCount);
+                    
+                    // Aggiorna lo stato del "select all" checkbox
+                    const visibleCheckboxes = Array.from(userCheckboxes).filter(cb => {
+                        return cb.closest('tr').style.display !== 'none';
+                    });
+                    const checkedVisibleCount = Array.from(visibleCheckboxes).filter(cb => cb.checked).length;
+                    
+                    selectAllCheckbox.checked = checkedVisibleCount === visibleCheckboxes.length && visibleCheckboxes.length > 0;
+                    selectAllCheckbox.indeterminate = checkedVisibleCount > 0 && checkedVisibleCount < visibleCheckboxes.length;
+                });
+            });
+            
+            function updateBulkActions(count) {
+                if (count > 0) {
+                    bulkActionsContainer.style.display = 'flex';
+                    selectedCountSpan.textContent = count;
+                } else {
+                    bulkActionsContainer.style.display = 'none';
+                }
+            }
+            
+            // Bulk actions
+            document.getElementById('bulkExport').addEventListener('click', function() {
+                const selectedIds = Array.from(document.querySelectorAll('.user-select:checked')).map(cb => cb.value);
+                console.log('Exporting users:', selectedIds);
+                // Implementazione reale: aprire modal di esportazione con gli ID selezionati
+                showNotification(`Avviata esportazione di ${selectedIds.length} utenti`, 'success');
+            });
+            
+            document.getElementById('bulkDelete').addEventListener('click', function() {
+                const selectedIds = Array.from(document.querySelectorAll('.user-select:checked')).map(cb => cb.value);
+                if (confirm(`Sei sicuro di voler eliminare ${selectedIds.length} utenti?`)) {
+                    console.log('Deleting users:', selectedIds);
+                    // Implementazione reale: chiamata AJAX per eliminazione multipla
+                    showNotification(`Eliminati ${selectedIds.length} utenti con successo`, 'success');
+                    // Simuliamo la rimozione dalla tabella
+                    selectedIds.forEach(id => {
+                        const row = document.querySelector(`.user-row[data-id="${id}"]`);
+                        if (row) row.remove();
+                    });
+                    // Aggiorna contatori
+                    const remainingRows = document.querySelectorAll('.user-row').length;
+                    visibleRecordsSpan.textContent = remainingRows;
+                    totalRecordsSpan.textContent = remainingRows;
+                    // Nascondi bulk actions
+                    bulkActionsContainer.style.display = 'none';
+                    selectAllCheckbox.checked = false;
+                }
+            });
+            
+            // Mostra dettagli utente
+                    // Modifica anche la parte JavaScript per il modal utente
+        document.querySelectorAll('.view-user').forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const row = document.querySelector(`.user-row[data-id="${userId}"]`);
+                const name = row.getAttribute('data-name');
+                const email = row.getAttribute('data-email');
+                const roles = row.getAttribute('data-roles').split(',');
+
+                // Popola il modal
+                document.getElementById('modalUserName').textContent = name;
+                document.getElementById('modalUserEmail').textContent = email;
+
+                // Formatta i ruoli come badge
+                const rolesHtml = roles.map(role => {
+                    let badgeClass = 'user';
+                    let icon = 'person';
+
+                    if (role === 'Admin') {
+                        badgeClass = 'admin';
+                        icon = 'shield-lock';
+                    } else if (role === 'Critic') {
+                        badgeClass = 'critic';
+                        icon = 'star';
+                    }
+
+                    return `<span class="badge role-badge ${badgeClass}"><i class="bi bi-${icon}"></i> ${role}</span>`;
+                }).join(' ');
+
+                document.getElementById('modalUserRoles').innerHTML = rolesHtml;
+
+                // Data di registrazione
+                const dateCell = row.querySelector('.user-date');
+                document.getElementById('modalUserDate').textContent = dateCell.querySelector('span').textContent;
+
+                // Stato (basato su EmailConfirmed invece di UltimoAccesso)
+                const isActive = row.classList.contains('user-active');
+                const statusElement = document.getElementById('modalUserStatus');
+                statusElement.textContent = isActive ? 'Email verificata' : 'Email non verificata';
+                statusElement.className = isActive ? 'detail-value text-success' : 'detail-value text-danger';
+
+                // Link per modifica
+                document.getElementById('modalEditLink').href = `/Admin/Edit?id=${userId}`;
+
+                // Mostra modal
+                const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+                modal.show();
+            });
+        });
+            
+            // Gestione filtri
+            document.getElementById('applyFilters').addEventListener('click', function() {
+                // Ottieni filtri selezionati
+                const selectedRoles = Array.from(document.querySelectorAll('.filter-role:checked')).map(cb => cb.value);
+                const selectedStatuses = Array.from(document.querySelectorAll('.filter-status:checked')).map(cb => cb.value);
+                
+                // Applica filtri
+                let visibleCount = 0;
+                
+                tableRows.forEach(row => {
+                    const roles = row.getAttribute('data-roles').split(',');
+                    const isActive = row.classList.contains('user-active');
+                    
+                    let showByRole = true;
+                    let showByStatus = true;
+                    
+                    // Filtro ruoli
+                    if (selectedRoles.length > 0) {
+                        showByRole = roles.some(role => selectedRoles.includes(role));
+                    }
+                    
+                    // Filtro stato
+                    if (selectedStatuses.length > 0) {
+                        if (selectedStatuses.includes('active') && !selectedStatuses.includes('inactive')) {
+                            showByStatus = isActive;
+                        } else if (!selectedStatuses.includes('active') && selectedStatuses.includes('inactive')) {
+                            showByStatus = !isActive;
+                        }
+                    }
+                    
+                    // Mostra/nascondi riga
+                    if (showByRole && showByStatus) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                // Aggiorna conteggio e mostra/nascondi stato vuoto
+                visibleRecordsSpan.textContent = visibleCount;
+                
+                if (visibleCount === 0) {
+                    emptyState.style.display = 'flex';
+                    tableBody.style.display = 'none';
+                } else {
+                    emptyState.style.display = 'none';
+                    tableBody.style.display = '';
+                }
+                
+                // Chiudi dropdown
+                bootstrap.Dropdown.getInstance(document.getElementById('filterDropdown')).hide();
+            });
+            
+            // Reset filtri
+            document.getElementById('clearFilters').addEventListener('click', function() {
+                document.querySelectorAll('.filter-role, .filter-status').forEach(cb => {
+                    cb.checked = false;
+                });
+                
+                // Applica filtri (nessuno)
+                document.getElementById('applyFilters').click();
+            });
+            
+            // Sorting tabella
+            document.querySelectorAll('.sortable').forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-sort');
+                    const isAsc = this.classList.contains('sort-asc');
+                    
+                    // Rimuovi classe di ordinamento da tutti gli header
+                    document.querySelectorAll('.sortable').forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+                    
+                    // Aggiungi classe di ordinamento a questo header
+                    this.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
+                    
+                    // Ordina righe
+                    const sortedRows = Array.from(tableRows).sort((a, b) => {
+                        let valueA, valueB;
+                        
+                        switch(column) {
+                            case 'id':
+                                valueA = parseInt(a.querySelector('.user-id').textContent);
+                                valueB = parseInt(b.querySelector('.user-id').textContent);
+                                break;
+                            case 'nome':
+                                valueA = a.getAttribute('data-name').split(' ')[0].toLowerCase();
+                                valueB = b.getAttribute('data-name').split(' ')[0].toLowerCase();
+                                break;
+                            case 'cognome':
+                                valueA = a.getAttribute('data-name').split(' ')[1] ? a.getAttribute('data-name').split(' ')[1].toLowerCase() : '';
+                                valueB = b.getAttribute('data-name').split(' ')[1] ? b.getAttribute('data-name').split(' ')[1].toLowerCase() : '';
+                                break;
+                            case 'email':
+                                valueA = a.getAttribute('data-email').toLowerCase();
+                                valueB = b.getAttribute('data-email').toLowerCase();
+                                break;
+                            case 'data':
+                                valueA = new Date(a.querySelector('.user-date').getAttribute('title').split(' ')[0].split('/').reverse().join('-'));
+                                valueB = new Date(b.querySelector('.user-date').getAttribute('title').split(' ')[0].split('/').reverse().join('-'));
+                                break;
+                            default:
+                                return 0;
+                        }
+                        
+                        // Determina l'ordine (ASC o DESC)
+                        const direction = isAsc ? 1 : -1;
+                        
+                        // Confronta i valori
+                        if (valueA < valueB) return -1 * direction;
+                        if (valueA > valueB) return 1 * direction;
+                        return 0;
+                    });
+                    
+                    // Riordina le righe nella tabella
+                    sortedRows.forEach(row => {
+                        tableBody.appendChild(row);
+                    });
+                });
+            });
+            
+            // Toggle visualizzazione password
+            document.querySelectorAll('.toggle-password').forEach(button => {
+                button.addEventListener('click', function() {
+                    const input = this.previousElementSibling;
+                    const icon = this.querySelector('i');
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.replace('bi-eye', 'bi-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.replace('bi-eye-slash', 'bi-eye');
+                    }
+                });
+            });
+            
+            // Controllo forza password
+            const passwordInput = document.getElementById('newUserPassword');
+            const strengthBar = document.querySelector('.strength-bar');
+            const strengthText = document.querySelector('.strength-text');
+            
+            passwordInput.addEventListener('input', function() {
+                const value = this.value;
+                let strength = 0;
+                
+                // Calcolo forza
+                if (value.length >= 8) strength += 1;
+                if (value.match(/[a-z]/) && value.match(/[A-Z]/)) strength += 1;
+                if (value.match(/\d/)) strength += 1;
+                if (value.match(/[^a-zA-Z0-9]/)) strength += 1;
+                
+                // Aggiorna UI
+                switch(strength) {
+                    case 0:
+                        strengthBar.className = 'strength-bar';
+                        strengthText.textContent = 'Forza password';
+                        break;
+                    case 1:
+                        strengthBar.className = 'strength-bar weak';
+                        strengthText.textContent = 'Debole';
+                        break;
+                    case 2:
+                        strengthBar.className = 'strength-bar medium';
+                        strengthText.textContent = 'Media';
+                        break;
+                    case 3:
+                        strengthBar.className = 'strength-bar strong';
+                        strengthText.textContent = 'Buona';
+                        break;
+                    case 4:
+                        strengthBar.className = 'strength-bar very-strong';
+                        strengthText.textContent = 'Molto forte';
+                        break;
+                }
+            });
+            
+            // Esportazione
+            document.getElementById('startExport').addEventListener('click', function() {
+                const format = document.querySelector('input[name="exportFormat"]:checked').value;
+                const includeAllData = document.getElementById('exportAllData').checked;
+                
+                // Mostreremo una simulazione di esportazione
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Esportazione in corso...';
+                
+                setTimeout(() => {
+                    showNotification(`Esportazione completata in formato ${format.toUpperCase()}`, 'success');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-download me-2"></i>Esporta';
+                    bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                }, 1500);
+            });
+            
+            // Form di creazione utente
+            document.getElementById('createUserForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // In un'applicazione reale, rimuovi questa riga
+                
+                // Simulazione creazione utente
+                const formData = new FormData(this);
+                const email = formData.get('Email');
+                const nome = formData.get('Nome');
+                const cognome = formData.get('Cognome');
+                const sendEmail = formData.get('SendWelcomeEmail') === 'on';
+                
+                // Mostra loading
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Creazione in corso...';
+                
+                setTimeout(() => {
+                    // Simulazione completata con successo
+                    bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+                    showNotification(`Utente ${nome} ${cognome} creato con successo${sendEmail ? ' ed email di benvenuto inviata' : ''}`, 'success');
+                    
+                    // Reset form
+                    this.reset();
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Crea utente';
+                    
+                    // In un'implementazione reale, si aggiornerebbe la tabella con il nuovo utente
+                }, 1500);
+            });
+            
+            // Funzione per mostrare notifiche toast
+            function showNotification(message, type = 'info') {
+                // Crea elemento toast
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type} show`;
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                
+                // Icona in base al tipo
+                let icon = 'info-circle';
+                if (type === 'success') icon = 'check-circle';
+                if (type === 'warning') icon = 'exclamation-triangle';
+                if (type === 'danger') icon = 'exclamation-circle';
+                
+                // Contenuto toast
+                toast.innerHTML = `
+                    <div class="toast-header">
+                        <i class="bi bi-${icon} me-2"></i>
+                        <strong class="me-auto">Notifica</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                `;
+                
+                // Aggiungi alla pagina
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                toastContainer.appendChild(toast);
+                document.body.appendChild(toastContainer);
+                
+                // Auto-rimozione
+                setTimeout(() => {
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        document.body.removeChild(toastContainer);
+                    }, 300);
+                }, 5000);
+                
+                // Aggiungi gestione pulsante di chiusura
+                toast.querySelector('.btn-close').addEventListener('click', function() {
+                    toast.classList.add('hide');
+                    setTimeout(() => {
+                        document.body.removeChild(toastContainer);
+                    }, 300);
+                });
+            }
+            
+            // Funzione per confermare eliminazione
+            window.confirmDelete = function(userName) {
+                return confirm(`Sei sicuro di voler eliminare l'utente ${userName}?`);
+            };
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        /* ===== VARIABLES ===== */
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-dark: #3a0ca3;
+            --secondary: #6c757d;
+            --success: #4caf50;
+            --info: #03a9f4;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --purple: #7952b3;
+            --red: #dc3545;
+            --green: #198754;
+            --blue: #0d6efd;
+            --orange: #fd7e14;
+            --yellow: #ffc107;
+            --teal: #20c997;
+            --cyan: #0dcaf0;
+            --border-radius: 0.375rem;
+            --border-radius-sm: 0.25rem;
+            --border-radius-lg: 0.5rem;
+            --border-radius-xl: 1rem;
+            --box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        /* ===== LAYOUT ===== */
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        /* ===== HEADER ===== */
+        .admin-dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .title-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: var(--border-radius-lg);
+            font-size: 1.5rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .btn-icon-text {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .btn-icon-text:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* ===== STATS CARDS ===== */
+        .stats-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stats-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.25rem;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .stats-icon-wrapper.blue {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .stats-icon-wrapper.red {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: var(--danger);
+        }
+        
+        .stats-icon-wrapper.green {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+        }
+        
+        .stats-icon-wrapper.purple {
+            background-color: rgba(121, 82, 179, 0.1);
+            color: var(--purple);
+        }
+        
+        .stats-content {
+            flex: 1;
+        }
+        
+        .stats-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+            color: var(--gray-900);
+        }
+        
+        .stats-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+        
+        .stats-chart-mini {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 40px;
+            margin-left: auto;
+        }
+        
+        .chart-bar {
+            width: 4px;
+            border-radius: 2px;
+            background-color: var(--primary-light);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .chart-bar:nth-child(odd) {
+            background-color: var(--primary);
+        }
+        
+        .stats-percentage {
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .stats-percentage span {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+        
+        .progress {
+            margin-top: 0.5rem;
+            height: 0.375rem;
+            width: 100px;
+            border-radius: 1rem;
+            background-color: var(--gray-200);
+        }
+        
+        .stats-trend {
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .trend-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 2px;
+        }
+        
+        .trend-value.positive {
+            color: var(--success);
+        }
+        
+        .trend-value.negative {
+            color: var(--danger);
+        }
+        
+        .trend-label {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            margin-top: 2px;
+        }
+        
+        /* ===== ALERT ===== */
+        .alert {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .alert-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .alert-icon {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .alert-heading {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .alert-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-danger {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+        
+        /* ===== CONTENT CARD ===== */
+        .content-card {
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+        
+        .content-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .card-header-left {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .records-count {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
+        }
+        
+        .card-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .content-card-body {
+            padding: 1.5rem;
+        }
+        
+        .content-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background-color: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        /* ===== SEARCH & FILTERS ===== */
+        .search-container {
+            position: relative;
+        }
+        
+        .search-icon {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            color: var(--gray-500);
+            pointer-events: none;
+        }
+        
+        .search-input {
+            padding-left: 2.5rem;
+            padding-right: 1rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-300);
+            height: 38px;
+            min-width: 240px;
+            transition: all 0.2s;
+        }
+
+            .search-input:focus {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+            }
+
+        .filter-dropdown {
+            width: 280px;
+            padding: 1rem 0;
+        }
+
+        .dropdown-header {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            padding: 0.5rem 1.25rem;
+        }
+
+        #refreshTable {
+            transition: transform 0.4s ease;
+        }
+
+            #refreshTable.rotating {
+                transform: rotate(180deg);
+            }
+
+        /* ===== BULK ACTIONS ===== */
+        .bulk-actions-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background-color: var(--primary-dark);
+            color: white;
+            border-radius: var(--border-radius);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .bulk-actions-count {
+            font-weight: 500;
+        }
+
+            .bulk-actions-count span {
+                font-weight: 700;
+                margin-right: 0.25rem;
+            }
+
+        .bulk-actions-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* ===== TABLE ===== */
+        .user-table {
+            margin: 0;
+        }
+
+            .user-table th {
+                font-weight: 600;
+                color: var(--gray-700);
+                border-top: none;
+                white-space: nowrap;
+            }
+
+                .user-table th.sortable {
+                    cursor: pointer;
+                    transition: color 0.2s;
+                    user-select: none;
+                }
+
+                    .user-table th.sortable:hover {
+                        color: var(--primary);
+                    }
+
+                    .user-table th.sortable i {
+                        font-size: 0.75rem;
+                        margin-left: 0.25rem;
+                        vertical-align: middle;
+                        opacity: 0.5;
+                    }
+
+                .user-table th.sort-asc i:before {
+                    content: "\F12F"; /* bi-arrow-up */
+                    opacity: 1;
+                }
+
+                .user-table th.sort-desc i:before {
+                    content: "\F143"; /* bi-arrow-down */
+                    opacity: 1;
+                }
+
+        .user-row {
+            transition: all 0.2s;
+        }
+
+            .user-row:hover {
+                background-color: var(--gray-100);
+            }
+
+            .user-row td {
+                vertical-align: middle;
+            }
+
+        .user-id {
+            font-family: monospace;
+            background-color: var(--gray-100);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .user-email {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .user-email a {
+                color: var(--primary);
+                text-decoration: none;
+                transition: all 0.2s;
+            }
+
+                .user-email a:hover {
+                    color: var(--primary-dark);
+                    text-decoration: underline;
+                }
+
+        .role-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+
+            .role-badge.admin {
+                background-color: rgba(244, 67, 54, 0.1);
+                color: var(--danger);
+            }
+
+            .role-badge.critic {
+                background-color: rgba(255, 152, 0, 0.1);
+                color: var(--orange);
+            }
+
+            .role-badge.user {
+                background-color: rgba(3, 169, 244, 0.1);
+                color: var(--info);
+            }
+
+        .user-date {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.25rem;
+            justify-content: flex-end;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+            border: 1px solid var(--gray-300);
+            background-color: white;
+            color: var(--gray-600);
+        }
+
+            .btn-icon:hover {
+                background-color: var(--gray-100);
+                color: var(--gray-800);
+            }
+
+            .btn-icon.view-user:hover {
+                background-color: var(--info);
+                color: white;
+                border-color: var(--info);
+            }
+
+            .btn-icon.delete-user:hover {
+                background-color: var(--danger);
+                color: white;
+                border-color: var(--danger);
+            }
+
+        /* User status indicators */
+        .user-active {
+            position: relative;
+        }
+
+        .user-inactive {
+            position: relative;
+            opacity: 0.75;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h4 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+            max-width: 400px;
+        }
+
+        /* ===== PAGINATION ===== */
+        .pagination-info {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .current-page {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* ===== USER DETAILS MODAL ===== */
+        .user-details-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--gray-500);
+            margin-bottom: 1.25rem;
+        }
+
+        .user-detail-item {
+            display: flex;
+            align-items: flex-start;
+            width: 100%;
+            margin-bottom: 1.25rem;
+        }
+
+        .detail-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background-color: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .detail-content {
+            flex: 1;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-weight: 500;
+        }
+
+        /* ===== EXPORT MODAL ===== */
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .export-option {
+            position: relative;
+        }
+
+            .export-option input[type="radio"] {
+                position: absolute;
+                opacity: 0;
+            }
+
+            .export-option label {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 1.25rem 0.75rem;
+                border: 1px solid var(--gray-300);
+                border-radius: var(--border-radius);
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .export-option input[type="radio"]:checked + label {
+                border-color: var(--primary);
+                background-color: rgba(67, 97, 238, 0.05);
+            }
+
+        .option-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+
+        .option-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        .option-desc {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            text-align: center;
+        }
+
+        /* ===== CREATE USER MODAL ===== */
+        .password-input-group {
+            position: relative;
+            display: flex;
+        }
+
+            .password-input-group input {
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+            .password-input-group button {
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+
+        .password-strength {
+            height: 4px;
+            width: 100%;
+            background-color: var(--gray-200);
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+            .strength-bar.weak {
+                background-color: var(--danger);
+                width: 25%;
+            }
+
+            .strength-bar.medium {
+                background-color: var(--warning);
+                width: 50%;
+            }
+
+            .strength-bar.strong {
+                background-color: var(--success);
+                width: 75%;
+            }
+
+            .strength-bar.very-strong {
+                background-color: var(--success);
+                width: 100%;
+            }
+
+        .strength-text {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .role-selection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .role-option {
+            position: relative;
+            flex-basis: calc(33.33% - 0.5rem);
+        }
+
+            .role-option input[type="checkbox"] {
+                position: absolute;
+                opacity: 0;
+            }
+
+            .role-option label {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 1rem 0.5rem;
+                border: 1px solid var(--gray-300);
+                border-radius: var(--border-radius);
+                cursor: pointer;
+                transition: all 0.2s;
+                text-align: center;
+            }
+
+            .role-option input[type="checkbox"]:checked + label {
+                border-color: var(--primary);
+                background-color: rgba(67, 97, 238, 0.05);
+            }
+
+            .role-option label i {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+                color: var(--primary);
+            }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            z-index: 9999;
+        }
+
+        .toast {
+            background-color: white;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            opacity: 1;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+            animation: toastIn 0.3s ease;
+        }
+
+            .toast.hide {
+                animation: toastOut 0.3s ease forwards;
+            }
+
+        .toast-success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast-danger {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast-warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast-info {
+            border-left: 4px solid var(--info);
+        }
+
+        .toast-header {
+            border-bottom: 1px solid var(--gray-200);
+            background-color: white;
+        }
+
+            .toast-header i {
+                color: var(--primary);
+            }
+
+            .toast-header .btn-close {
+                margin-right: -0.375rem;
+            }
+    </style>
+}

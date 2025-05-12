@@ -1,0 +1,1178 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+@if (ViewData.ContainsKey("Debug"))
+{
+    <div class="alert alert-info mt-3">
+        <strong>Debug:</strong> @ViewData["Debug"]
+    </div>
+}
+
+<!-- Hero Banner Migliorato -->
+<div class="hero-section">
+    <div class="hero-background">
+        <div class="hero-overlay"></div>
+    </div>
+    <div class="container position-relative">
+        <div class="row">
+            <div class="col-lg-7">
+                <div class="hero-content" data-aos="fade-right">
+                    <h1 class="hero-title">La tua esperienza <br><span class="text-highlight">cinematografica</span> evoluta</h1>
+                    <p class="hero-subtitle">Esplora, scopri e verifica i migliori contenuti cinematografici con intelligenza artificiale</p>
+                    <div class="hero-buttons">
+                        <a asp-page="/Movies/Index" class="btn btn-primary btn-lg hero-btn pulse-btn">
+                            <i class="bi bi-film me-2"></i>Esplora Film
+                        </a>
+                        <a asp-page="/Movies/AdvancedSearch" class="btn btn-outline-light btn-lg hero-btn">
+                            <i class="bi bi-search me-2"></i>Ricerca Avanzata
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="hero-floating-cards">
+                    <div class="floating-card card-1" data-aos="fade-up" data-aos-delay="200"></div>
+                    <div class="floating-card card-2" data-aos="fade-up" data-aos-delay="300"></div>
+                    <div class="floating-card card-3" data-aos="fade-up" data-aos-delay="400"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container main-content">
+    <!-- Stats Counters -->
+    <div class="stats-container" data-aos="fade-up">
+        <div class="row g-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-film"></i></div>
+                    <div class="stat-number">@(Model.LatestMovies.Count() + Model.TopRatedMovies.Count())</div>
+                    <div class="stat-label">Film Totali</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-star"></i></div>
+                    <div class="stat-number">@Model.TopRatedMovies.Max(m => m.Rating).ToString("0.0")</div>
+                    <div class="stat-label">Rating Massimo</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
+                    <div class="stat-number">@DateTime.Now.Year</div>
+                    <div class="stat-label">Anno Corrente</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="bi bi-patch-check"></i></div>
+                    <div class="stat-number">@Model.TopRatedMovies.Count(m => m.IsVerified)</div>
+                    <div class="stat-label">Film Verificati</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Film Più Recenti -->
+    <div class="section" data-aos="fade-up">
+        <div class="section-header">
+            <div class="section-title-group">
+                <h2 class="section-title"><i class="bi bi-calendar-check"></i>Film Più Recenti</h2>
+                <div class="section-line"></div>
+            </div>
+            <a asp-page="/Movies/Index" class="section-link">
+                <span>Vedi tutti</span>
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+
+        <div class="movies-slider">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+                @foreach (var movie in Model.LatestMovies)
+                {
+                    <div class="col">
+                        <div class="movie-card" data-aos="fade-up" data-aos-delay="@(Model.LatestMovies.ToList().IndexOf(movie) * 100)">
+                            <div class="movie-poster">
+                                @if (!string.IsNullOrEmpty(movie.PosterPath))
+                                {
+                                    <img src="@movie.PosterPath" alt="@movie.Title" class="movie-poster-img" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <div class="no-poster">
+                                        <i class="bi bi-film"></i>
+                                        <span>No Poster</span>
+                                    </div>
+                                }
+                                <div class="movie-rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <span>@movie.Rating.ToString("0.0")</span>
+                                </div>
+
+                                <div class="movie-overlay">
+                                    <div class="movie-overlay-content">
+                                        @if (movie.Id > 0)
+                                        {
+                                            <a asp-page="/Movies/Details" asp-route-id="@movie.Id" class="overlay-btn">
+                                                <i class="bi bi-eye"></i>
+                                                <span>Dettagli</span>
+                                            </a>
+                                        }
+                                        else if (movie.TmdbId > 0)
+                                        {
+                                            <form method="post" asp-page-handler="ImportAndView">
+                                                <input type="hidden" name="tmdbId" value="@movie.TmdbId" />
+                                                <button type="submit" class="overlay-btn">
+                                                    <i class="bi bi-eye"></i>
+                                                    <span>Visualizza</span>
+                                                </button>
+                                            </form>
+                                        }
+
+                                        <div class="overlay-genres">
+                                            @if (movie.Genres != null && movie.Genres.Length > 0)
+                                            {
+                                                foreach (var genre in movie.Genres.Take(3))
+                                                {
+                                                    <span class="overlay-genre">@genre</span>
+                                                }
+                                            }
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(movie.Description) && movie.Description.Length > 100)
+                                        {
+                                            <div class="overlay-description">
+                                                @(movie.Description.Substring(0, 100) + "...")
+                                            </div>
+                                        }
+                                        else if (!string.IsNullOrEmpty(movie.Description))
+                                        {
+                                            <div class="overlay-description">
+                                                @movie.Description
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                @if (movie.Id == 0 && movie.TmdbId > 0)
+                                {
+                                    <div class="movie-source">
+                                        <i class="bi bi-cloud"></i>
+                                        <span>TMDB</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="movie-info">
+                                <h5 class="movie-title" title="@movie.Title">
+                                    @if (movie.Id > 0)
+                                    {
+                                        <a asp-page="/Movies/Details" asp-route-id="@movie.Id">@movie.Title</a>
+                                    }
+                                    else
+                                    {
+                                        @movie.Title
+                                    }
+
+                                    @if (movie.IsVerified)
+                                    {
+                                        <span class="verified-badge" title="Film verificato"><i class="bi bi-patch-check-fill"></i></span>
+                                    }
+                                </h5>
+                                <div class="movie-meta">
+                                    <div class="meta-item">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span>@(movie.ReleaseDate?.Year.ToString() ?? "N/A")</span>
+                                    </div>
+                                    @if (movie.Genres != null && movie.Genres.Length > 0)
+                                    {
+                                        <div class="meta-item">
+                                            <i class="bi bi-tag"></i>
+                                            <span>@movie.Genres[0]</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Film Con Valutazione Più Alta -->
+    <div class="section" data-aos="fade-up">
+        <div class="section-header">
+            <div class="section-title-group">
+                <h2 class="section-title"><i class="bi bi-star"></i>I Più Votati</h2>
+                <div class="section-line"></div>
+            </div>
+            <a asp-page="/Movies/Index" asp-route-sortBy="rating" class="section-link">
+                <span>Vedi tutti</span>
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+
+        <div class="movies-slider">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+                @foreach (var movie in Model.TopRatedMovies)
+                {
+                    <div class="col">
+                        <div class="movie-card top-rated-card" data-aos="fade-up" data-aos-delay="@(Model.TopRatedMovies.ToList().IndexOf(movie) * 100)">
+                            <div class="ribbon-wrapper" title="Valutazione alta">
+                                <div class="ribbon">TOP</div>
+                            </div>
+                            <div class="movie-poster">
+                                @if (!string.IsNullOrEmpty(movie.PosterPath))
+                                {
+                                    <img src="@movie.PosterPath" alt="@movie.Title" class="movie-poster-img" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <div class="no-poster">
+                                        <i class="bi bi-film"></i>
+                                        <span>No Poster</span>
+                                    </div>
+                                }
+                                <div class="movie-rating top-rated">
+                                    <i class="bi bi-star-fill"></i>
+                                    <span>@movie.Rating.ToString("0.0")</span>
+                                </div>
+
+                                <div class="movie-overlay">
+                                    <div class="movie-overlay-content">
+                                        @if (movie.Id > 0)
+                                        {
+                                            <a asp-page="/Movies/Details" asp-route-id="@movie.Id" class="overlay-btn">
+                                                <i class="bi bi-eye"></i>
+                                                <span>Dettagli</span>
+                                            </a>
+                                        }
+                                        else if (movie.TmdbId > 0)
+                                        {
+                                            <form method="post" asp-page-handler="ImportAndView">
+                                                <input type="hidden" name="tmdbId" value="@movie.TmdbId" />
+                                                <button type="submit" class="overlay-btn">
+                                                    <i class="bi bi-eye"></i>
+                                                    <span>Visualizza</span>
+                                                </button>
+                                            </form>
+                                        }
+
+                                        <div class="overlay-genres">
+                                            @if (movie.Genres != null && movie.Genres.Length > 0)
+                                            {
+                                                foreach (var genre in movie.Genres.Take(3))
+                                                {
+                                                    <span class="overlay-genre">@genre</span>
+                                                }
+                                            }
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(movie.Description) && movie.Description.Length > 100)
+                                        {
+                                            <div class="overlay-description">
+                                                @(movie.Description.Substring(0, 100) + "...")
+                                            </div>
+                                        }
+                                        else if (!string.IsNullOrEmpty(movie.Description))
+                                        {
+                                            <div class="overlay-description">
+                                                @movie.Description
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                @if (movie.Id == 0 && movie.TmdbId > 0)
+                                {
+                                    <div class="movie-source">
+                                        <i class="bi bi-cloud"></i>
+                                        <span>TMDB</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="movie-info">
+                                <h5 class="movie-title" title="@movie.Title">
+                                    @if (movie.Id > 0)
+                                    {
+                                        <a asp-page="/Movies/Details" asp-route-id="@movie.Id">@movie.Title</a>
+                                    }
+                                    else
+                                    {
+                                        @movie.Title
+                                    }
+
+                                    @if (movie.IsVerified)
+                                    {
+                                        <span class="verified-badge" title="Film verificato"><i class="bi bi-patch-check-fill"></i></span>
+                                    }
+                                </h5>
+                                <div class="movie-meta">
+                                    <div class="meta-item">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span>@(movie.ReleaseDate?.Year.ToString() ?? "N/A")</span>
+                                    </div>
+                                    @if (movie.Genres != null && movie.Genres.Length > 0)
+                                    {
+                                        <div class="meta-item">
+                                            <i class="bi bi-tag"></i>
+                                            <span>@movie.Genres[0]</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Consigliati Per Te -->
+    <div class="section recommendations-section" data-aos="fade-up">
+        <div class="section-header">
+            <div class="section-title-group">
+                <h2 class="section-title"><i class="bi bi-lightbulb"></i>Consigliati Per Te</h2>
+                <div class="section-line"></div>
+            </div>
+            <a asp-page="/Movies/AdvancedSearch" class="section-link">
+                <span>Scopri di più</span>
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+
+        @if (Model.HasRecommendations && !string.IsNullOrEmpty(Model.RecommendationText))
+        {
+            <div class="card gemini-card mb-5" data-aos="fade-up">
+                <div class="gemini-recommendation">
+                    <div class="ai-badge">
+                        <i class="bi bi-stars"></i> Consigli personalizzati con IA
+                    </div>
+                    <div class="recommendation-text">
+                        @Model.RecommendationText
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="movies-slider">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+                @foreach (var movie in Model.RecommendedMovies)
+                {
+                    <div class="col">
+                        <div class="movie-card recommended-card" data-aos="fade-up" data-aos-delay="@(Model.RecommendedMovies.ToList().IndexOf(movie) * 100)">
+                            <div class="movie-poster">
+                                @if (!string.IsNullOrEmpty(movie.PosterPath))
+                                {
+                                    <img src="@movie.PosterPath" alt="@movie.Title" class="movie-poster-img" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <div class="no-poster">
+                                        <i class="bi bi-film"></i>
+                                        <span>No Poster</span>
+                                    </div>
+                                }
+                                <div class="movie-rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <span>@movie.Rating.ToString("0.0")</span>
+                                </div>
+
+                                <div class="recommend-badge">
+                                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                                </div>
+
+                                <div class="movie-overlay">
+                                    <div class="movie-overlay-content">
+                                        @if (movie.Id > 0)
+                                        {
+                                            <a asp-page="/Movies/Details" asp-route-id="@movie.Id" class="overlay-btn">
+                                                <i class="bi bi-eye"></i>
+                                                <span>Dettagli</span>
+                                            </a>
+                                        }
+                                        else if (movie.TmdbId > 0)
+                                        {
+                                            <form method="post" asp-page-handler="ImportAndView">
+                                                <input type="hidden" name="tmdbId" value="@movie.TmdbId" />
+                                                <button type="submit" class="overlay-btn">
+                                                    <i class="bi bi-eye"></i>
+                                                    <span>Visualizza</span>
+                                                </button>
+                                            </form>
+                                        }
+
+                                        <div class="overlay-genres">
+                                            @if (movie.Genres != null && movie.Genres.Length > 0)
+                                            {
+                                                foreach (var genre in movie.Genres.Take(3))
+                                                {
+                                                    <span class="overlay-genre">@genre</span>
+                                                }
+                                            }
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(movie.Description) && movie.Description.Length > 100)
+                                        {
+                                            <div class="overlay-description">
+                                                @(movie.Description.Substring(0, 100) + "...")
+                                            </div>
+                                        }
+                                        else if (!string.IsNullOrEmpty(movie.Description))
+                                        {
+                                            <div class="overlay-description">
+                                                @movie.Description
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                @if (movie.Id == 0 && movie.TmdbId > 0)
+                                {
+                                    <div class="movie-source">
+                                        <i class="bi bi-cloud"></i>
+                                        <span>TMDB</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="movie-info">
+                                <h5 class="movie-title" title="@movie.Title">
+                                    @if (movie.Id > 0)
+                                    {
+                                        <a asp-page="/Movies/Details" asp-route-id="@movie.Id">@movie.Title</a>
+                                    }
+                                    else
+                                    {
+                                        @movie.Title
+                                    }
+
+                                    @if (movie.IsVerified)
+                                    {
+                                        <span class="verified-badge" title="Film verificato"><i class="bi bi-patch-check-fill"></i></span>
+                                    }
+                                </h5>
+                                <div class="movie-meta">
+                                    <div class="meta-item">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span>@(movie.ReleaseDate?.Year.ToString() ?? "N/A")</span>
+                                    </div>
+                                    @if (movie.Genres != null && movie.Genres.Length > 0)
+                                    {
+                                        <div class="meta-item">
+                                            <i class="bi bi-tag"></i>
+                                            <span>@movie.Genres[0]</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle me-2"></i> @Model.ErrorMessage
+        </div>
+    }
+
+    <!-- CTA Finale -->
+    <div class="cta-section" data-aos="fade-up">
+        <div class="cta-content text-center">
+            <h2 class="cta-title">Esplora il <span class="text-highlight">mondo del cinema</span> con CineVerify</h2>
+            <p class="cta-subtitle">La tua piattaforma per scoprire, valutare e discutere i migliori film</p>
+            <div class="cta-buttons">
+                <a asp-page="/Movies/Index" class="btn btn-primary btn-lg cta-btn">
+                    <i class="bi bi-film me-2"></i> Esplora tutti i film
+                </a>
+                @if (!User.Identity.IsAuthenticated)
+                {
+                    <a asp-page="/Account/Register" class="btn btn-outline-light btn-lg cta-btn">
+                        <i class="bi bi-person-plus me-2"></i> Registrati ora
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Script per AOS (Animate On Scroll) -->
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Inizializza AOS
+            AOS.init({
+                duration: 800,
+                once: true
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <!-- Stili per AOS -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #f72585;
+            --dark-color: #1f2937;
+            --light-color: #ffffff;
+            --muted-color: #94a3b8;
+            --card-bg: #ffffff;
+            --card-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            --card-shadow-hover: 0 14px 30px rgba(0,0,0,0.15);
+            --rating-color: #ffbb00;
+            --verified-color: #4ade80;
+            --text-light: #ffffff;
+            --text-dark: #1e293b;
+            --gradient-primary: linear-gradient(135deg, #4361ee, #3a0ca3);
+            --gradient-secondary: linear-gradient(135deg, #f72585, #7209b7);
+            --gradient-top-rated: linear-gradient(135deg, #f59e0b, #ef4444);
+            --gradient-recommended: linear-gradient(135deg, #10b981, #3b82f6);
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Helpers */
+        .text-highlight {
+            color: var(--secondary-color);
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+        }
+
+            .text-highlight::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 30%;
+                background-color: rgba(247, 37, 133, 0.15);
+                z-index: -1;
+                transform: skewX(-5deg);
+            }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            margin-top: -1.5rem;
+            margin-bottom: 3rem;
+            padding: 0 0 3rem;
+        }
+
+        .hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 30%, rgba(31, 41, 55, 0.8));
+            z-index: -1;
+        }
+
+        .hero-content {
+            padding: 5rem 0;
+            color: var(--light-color);
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-btn {
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+            .hero-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+            }
+
+        .pulse-btn {
+            animation: pulse 2s infinite;
+        }
+
+        /* Floating cards in hero */
+        .hero-floating-cards {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        .floating-card {
+            position: absolute;
+            width: 220px;
+            height: 320px;
+            border-radius: 12px;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+        }
+
+        .card-1 {
+            top: 10%;
+            left: 10%;
+            background-image: url('https://image.tmdb.org/t/p/w500/kuf6dutpsT0vSVehic3EZIqkOBt.jpg');
+            animation: float 6s ease-in-out infinite;
+            z-index: 3;
+            transform: rotate(-5deg);
+        }
+
+        .card-2 {
+            top: 15%;
+            left: 25%;
+            background-image: url('https://image.tmdb.org/t/p/w500/Af4bXE63pVsb2FtbW8uYIyPBadD.jpg');
+            animation: float 7s ease-in-out infinite;
+            z-index: 2;
+            transform: rotate(7deg);
+        }
+
+        .card-3 {
+            top: 20%;
+            left: 40%;
+            background-image: url('https://image.tmdb.org/t/p/w500/uDgy6hyPd82kOHh6I95FLtLnj6p.jpg');
+            animation: float 8s ease-in-out infinite;
+            z-index: 1;
+            transform: rotate(-3deg);
+        }
+
+        /* Stats Counters */
+        .stats-container {
+            margin-bottom: 4rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+                box-shadow: var(--card-shadow-hover);
+            }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            opacity: 0.8;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--muted-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Section Styling */
+        .main-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .section {
+            margin-bottom: 5rem;
+            position: relative;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+            .section-title i {
+                color: var(--primary-color);
+                font-size: 1.4rem;
+            }
+
+        .section-line {
+            height: 4px;
+            width: 60px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .section-link {
+            color: var(--primary-color);
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: rgba(67, 97, 238, 0.1);
+        }
+
+            .section-link:hover {
+                background: rgba(67, 97, 238, 0.2);
+                color: var(--primary-color);
+                transform: translateX(5px);
+            }
+
+            .section-link i {
+                transition: var(--transition);
+            }
+
+            .section-link:hover i {
+                transform: translateX(3px);
+            }
+
+        /* Movie Cards */
+        .movie-card {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            background-color: var(--card-bg);
+            transition: var(--transition);
+            height: 100%;
+            position: relative;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+            .movie-card:hover {
+                transform: translateY(-10px) scale(1.02);
+                box-shadow: var(--card-shadow-hover);
+                z-index: 5;
+            }
+
+        .top-rated-card {
+            border-top: 4px solid #f59e0b;
+        }
+
+        .recommended-card {
+            border-left: 4px solid #10b981;
+        }
+
+        .movie-poster {
+            position: relative;
+            aspect-ratio: 2/3;
+            overflow: hidden;
+        }
+
+        .movie-poster-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+
+        .movie-card:hover .movie-poster-img {
+            transform: scale(1.08);
+        }
+
+        .no-poster {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+            color: #94a3b8;
+            gap: 0.5rem;
+        }
+
+            .no-poster i {
+                font-size: 3rem;
+            }
+
+        .movie-rating {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: var(--rating-color);
+            border-radius: 20px;
+            padding: 0.4rem 0.8rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .top-rated {
+            background: var(--gradient-top-rated);
+            color: white;
+        }
+
+        .movie-source {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #01b4e4;
+            border-radius: 20px;
+            padding: 0.4rem 0.8rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .recommend-badge {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: var(--gradient-recommended);
+            color: white;
+            border-radius: 20px;
+            padding: 0.4rem 0.8rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .ribbon-wrapper {
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 3;
+            overflow: hidden;
+            width: 75px;
+            height: 75px;
+        }
+
+        .ribbon {
+            position: absolute;
+            top: 13px;
+            right: -25px;
+            transform: rotate(45deg);
+            background: var(--gradient-top-rated);
+            color: white;
+            padding: 5px 30px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            letter-spacing: 1px;
+        }
+
+        /* Movie Overlay */
+        .movie-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(2px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            padding: 1.25rem;
+        }
+
+        .movie-card:hover .movie-overlay {
+            opacity: 1;
+        }
+
+        .movie-overlay-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .overlay-btn {
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 30px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+            .overlay-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+                color: white;
+            }
+
+        .overlay-genres {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .overlay-genre {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-radius: 15px;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .overlay-description {
+            color: #d1d5db;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            text-align: center;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+        }
+
+        /* Movie Info */
+        .movie-info {
+            padding: 1.25rem;
+        }
+
+        .movie-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            height: 3rem;
+            position: relative;
+        }
+
+            .movie-title a {
+                color: var(--text-dark);
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+
+                .movie-title a:hover {
+                    color: var(--primary-color);
+                }
+
+        .verified-badge {
+            color: var(--verified-color);
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .movie-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: var(--muted-color);
+            font-size: 0.9rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Gemini Card */
+        .gemini-card {
+            background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            border: none;
+        }
+
+        .gemini-recommendation {
+            position: relative;
+            padding: 2rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+            font-weight: 600;
+            border-radius: 30px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .recommendation-text {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: var(--text-dark);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: var(--gradient-primary);
+            padding: 4rem 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            color: var(--light-color);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+            .cta-section::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"%3E%3Cpath fill="%23ffffff" fill-opacity="0.05" d="M0,192L48,202.7C96,213,192,235,288,229.3C384,224,480,192,576,170.7C672,149,768,139,864,154.7C960,171,1056,213,1152,218.7C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"%3E%3C/path%3E%3C/svg%3E');
+                background-size: 100% 100%;
+                background-position: bottom;
+                opacity: 0.5;
+                z-index: 0;
+            }
+
+        .cta-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .cta-subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-btn {
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+            .cta-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            }
+    </style>
+}

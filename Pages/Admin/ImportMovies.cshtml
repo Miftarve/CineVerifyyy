@@ -1,0 +1,1931 @@
+﻿@page
+@model CineVerify.Pages.Admin.ImportMoviesModel
+@{
+    ViewData["Title"] = "Importa Film da TMDB";
+}
+
+<div class="import-movies-container">
+    <!-- Header con info -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1><i class="bi bi-cloud-download"></i> Importa Film da TMDB</h1>
+                <p class="text-muted">Arricchisci il database di CineVerify con film da The Movie Database</p>
+            </div>
+            <div class="header-actions">
+                <a asp-page="/Movies/Index" class="btn btn-outline-primary">
+                    <i class="bi bi-collection-play"></i>
+                    <span>Gestisci Film</span>
+                </a>
+                <a asp-page="/Admin/Dashboard" class="btn btn-outline-secondary">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifiche di successo/errore -->
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert-content">
+                <i class="bi bi-check-circle"></i>
+                <div>
+                    <strong>Importazione completata</strong>
+                    <p>@Model.SuccessMessage</p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert-content">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div>
+                    <strong>Errore durante l'importazione</strong>
+                    <p>@Model.ErrorMessage</p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Statistiche del database -->
+    <div class="stats-cards">
+        <div class="stat-card movies">
+            <div class="stat-icon">
+                <i class="bi bi-film"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value">@Model.TotalMovies</span>
+                <span class="stat-label">Film Totali</span>
+            </div>
+            <div class="progress-info">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card genres">
+            <div class="stat-icon">
+                <i class="bi bi-tags"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value">@Model.TotalGenres</span>
+                <span class="stat-label">Generi Disponibili</span>
+            </div>
+            <div class="progress-info">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card tmdb">
+            <div class="stat-icon">
+                <i class="bi bi-cloud"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value">@Model.TmdbMovies</span>
+                <span class="stat-label">Film da TMDB</span>
+            </div>
+            <div class="progress-info">
+                @if (Model.TotalMovies > 0)
+                {
+                    var percentage = (int)((double)Model.TmdbMovies / Model.TotalMovies * 100);
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: @percentage%" aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <span class="percentage">@percentage%</span>
+                }
+                else
+                {
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <span class="percentage">0%</span>
+                }
+            </div>
+        </div>
+        
+        <div class="stat-card api">
+            <div class="stat-icon">
+                <i class="bi bi-lightning"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value">TMDB</span>
+                <span class="stat-label">API Status</span>
+            </div>
+            <div class="api-status active">
+                <span class="status-indicator"></span>
+                <span>Connesso</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs per i metodi di importazione -->
+    <div class="import-tabs-container">
+        <ul class="nav nav-tabs import-tabs" id="importTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="popular-tab" data-bs-toggle="tab" data-bs-target="#popular" type="button" role="tab" aria-controls="popular" aria-selected="true">
+                    <i class="bi bi-star"></i> Film Popolari
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="genre-tab" data-bs-toggle="tab" data-bs-target="#genre" type="button" role="tab" aria-controls="genre" aria-selected="false">
+                    <i class="bi bi-tags"></i> Per Genere
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab" aria-controls="search" aria-selected="false">
+                    <i class="bi bi-search"></i> Ricerca Film
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">
+                    <i class="bi bi-gear"></i> Avanzate
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content import-tab-content" id="importTabsContent">
+            <!-- Tab Film Popolari -->
+            <div class="tab-pane fade show active" id="popular" role="tabpanel" aria-labelledby="popular-tab">
+                <div class="import-card">
+                    <div class="import-card-body">
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <h3 class="import-title">Importa Film Popolari</h3>
+                                <p class="import-description">
+                                    Importa automaticamente i film più popolari da TMDB. Questo tipo di importazione ti consente di 
+                                    arricchire rapidamente il tuo catalogo con film di successo.
+                                </p>
+                                
+                                <form method="post" asp-page-handler="ImportPopular" id="importPopularForm">
+                                    <div class="mb-4">
+                                        <label class="form-label">Numero di film da importare:</label>
+                                        <div class="pages-selector">
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="pages1" value="1">
+                                                <label class="form-check-label" for="pages1">20</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="pages2" value="2">
+                                                <label class="form-check-label" for="pages2">40</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="pages3" value="3" checked>
+                                                <label class="form-check-label" for="pages3">60</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="pages5" value="5">
+                                                <label class="form-check-label" for="pages5">100</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="pages10" value="10">
+                                                <label class="form-check-label" for="pages10">200</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="import-options mb-4">
+                                        <h4>Opzioni di importazione</h4>
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="importPostersPopular" name="downloadPosters" checked>
+                                                    <label class="form-check-label" for="importPostersPopular">Scarica locandine</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="importVideosPopular" name="downloadVideos" checked>
+                                                    <label class="form-check-label" for="importVideosPopular">Importa trailer</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="skipExistingPopular" name="skipExisting" checked>
+                                                    <label class="form-check-label" for="skipExistingPopular">Salta film esistenti</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="includeAdultPopular" name="includeAdult">
+                                                    <label class="form-check-label" for="includeAdultPopular">Includi contenuti per adulti</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary" id="importPopularButton">
+                                            <i class="bi bi-cloud-download"></i> Importa Film Popolari
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" id="previewPopularButton">
+                                            <i class="bi bi-eye"></i> Anteprima
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-lg-5 d-none d-lg-block">
+                                <div class="import-illustration">
+                                    <img src="/images/admin/popular_movies.svg" alt="Importa film popolari" class="illustration-image" onerror="this.style.display='none'">
+                                    <div class="import-info-card">
+                                        <h5><i class="bi bi-lightbulb"></i> Lo sapevi?</h5>
+                                        <p>I film popolari cambiano ogni giorno in base agli aggiornamenti TMDB. Importali regolarmente per mantenere aggiornato il tuo catalogo.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab Per Genere -->
+            <div class="tab-pane fade" id="genre" role="tabpanel" aria-labelledby="genre-tab">
+                <div class="import-card">
+                    <div class="import-card-body">
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <h3 class="import-title">Importa Film per Genere</h3>
+                                <p class="import-description">
+                                    Seleziona un genere specifico per importare film corrispondenti. Questo è utile per 
+                                    bilanciare la tua libreria o arricchire categorie specifiche.
+                                </p>
+                                
+                                <form method="post" asp-page-handler="ImportByGenre" id="importGenreForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Seleziona Genere:</label>
+                                        <select class="form-select" name="genreId" id="genreSelect" required>
+                                            @foreach (var genre in Model.Genres)
+                                            {
+                                                <option value="@genre.Id">@genre.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="form-label">Numero di film da importare:</label>
+                                        <div class="pages-selector">
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="genrePages1" value="1">
+                                                <label class="form-check-label" for="genrePages1">20</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="genrePages2" value="2" checked>
+                                                <label class="form-check-label" for="genrePages2">40</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="genrePages3" value="3">
+                                                <label class="form-check-label" for="genrePages3">60</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="pages" id="genrePages5" value="5">
+                                                <label class="form-check-label" for="genrePages5">100</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="import-options mb-4">
+                                        <h4>Opzioni di importazione</h4>
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="importPostersGenre" name="downloadPosters" checked>
+                                                    <label class="form-check-label" for="importPostersGenre">Scarica locandine</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="importVideosGenre" name="downloadVideos" checked>
+                                                    <label class="form-check-label" for="importVideosGenre">Importa trailer</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="skipExistingGenre" name="skipExisting" checked>
+                                                    <label class="form-check-label" for="skipExistingGenre">Salta film esistenti</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="includeAdultGenre" name="includeAdult">
+                                                    <label class="form-check-label" for="includeAdultGenre">Includi contenuti per adulti</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary" id="importGenreButton">
+                                            <i class="bi bi-cloud-download"></i> Importa Film per Genere
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" id="previewGenreButton">
+                                            <i class="bi bi-eye"></i> Anteprima
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-lg-5 d-none d-lg-block">
+                                <div class="import-illustration">
+                                    <img src="/images/admin/genre_movies.svg" alt="Importa film per genere" class="illustration-image" onerror="this.style.display='none'">
+                                    <div class="genre-distribution" id="genreDistribution">
+                                        <!-- Qui ci sarà un grafico generato da JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab Ricerca Film -->
+            <div class="tab-pane fade" id="search" role="tabpanel" aria-labelledby="search-tab">
+                <div class="import-card">
+                    <div class="import-card-body">
+                        <h3 class="import-title">Cerca e Importa Film Specifici</h3>
+                        <p class="import-description">
+                            Cerca film specifici per titolo e importali individualmente nel tuo database.
+                            Perfetto per aggiungere film particolari o completare collezioni.
+                        </p>
+                        
+                        <form method="post" asp-page-handler="Search" class="mb-4" id="searchForm">
+                            <div class="search-container">
+                                <div class="input-group">
+                                    <span class="input-group-text search-icon">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control search-input" 
+                                           placeholder="Cerca film per titolo... (es. Dune, Inception, ecc.)" 
+                                           asp-for="SearchQuery" required>
+                                    <button class="btn btn-primary" type="submit" id="searchButton">
+                                        Cerca
+                                    </button>
+                                </div>
+                                <div class="search-options">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="searchType" id="searchTypeGlobal" value="global" checked>
+                                        <label class="form-check-label" for="searchTypeGlobal">Ricerca globale</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="searchType" id="searchTypeExact" value="exact">
+                                        <label class="form-check-label" for="searchTypeExact">Titolo esatto</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div id="searchResults">
+                            @if (Model.SearchResults.Count > 0)
+                            {
+                                <div class="search-results-header">
+                                    <h4>Risultati della Ricerca</h4>
+                                    <span class="results-count">@Model.SearchResults.Count film trovati</span>
+                                </div>
+                                
+                                <div class="search-results">
+                                    @foreach (var movie in Model.SearchResults)
+                                    {
+                                        <div class="search-result-item">
+                                            <div class="movie-thumbnail">
+                                                @if (!string.IsNullOrEmpty(movie.PosterPath))
+                                                {
+                                                    <img src="@movie.PosterPath" alt="@movie.Title" loading="lazy">
+                                                }
+                                                else
+                                                {
+                                                    <div class="no-poster">
+                                                        <i class="bi bi-film"></i>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="movie-info">
+                                                <h5 class="movie-title">@movie.Title</h5>
+                                                <div class="movie-meta">
+                                                    <span class="movie-year">
+                                                        <i class="bi bi-calendar3"></i>
+                                                        @(movie.ReleaseDate?.Year.ToString() ?? "N/A")
+                                                    </span>
+                                                    <span class="movie-rating">
+                                                        <i class="bi bi-star-fill"></i>
+                                                        @movie.Rating.ToString("0.0")
+                                                        <span class="vote-count">(@movie.VoteCount)</span>
+                                                    </span>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(movie.Description))
+                                                {
+                                                    <p class="movie-overview">@(movie.Description?.Length > 150 ? movie.Description.Substring(0, 150) + "..." : movie.Description)</p>
+                                                }
+                                            </div>
+                                            <div class="movie-action">
+                                                <form method="post" asp-page-handler="ImportMovie">
+                                                    <input type="hidden" name="tmdbId" value="@movie.TmdbId" />
+                                                    <button type="submit" class="btn btn-primary import-btn">
+                                                        <i class="bi bi-cloud-download"></i>
+                                                        <span>Importa</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else if (!string.IsNullOrEmpty(Model.SearchQuery))
+                            {
+                                <div class="empty-search">
+                                    <div class="empty-icon">
+                                        <i class="bi bi-search"></i>
+                                    </div>
+                                    <h5>Nessun risultato trovato</h5>
+                                    <p>La ricerca per "<strong>@Model.SearchQuery</strong>" non ha prodotto risultati. Prova con altri termini.</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab Avanzate -->
+            <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+                <div class="import-card">
+                    <div class="import-card-body">
+                        <h3 class="import-title">Opzioni Avanzate di Importazione</h3>
+                        <p class="import-description">
+                            Configura opzioni avanzate per l'importazione: film in uscita, film più votati, 
+                            film di un determinato anno e altre impostazioni speciali.
+                        </p>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="advanced-option-card">
+                                    <div class="option-header">
+                                        <h4><i class="bi bi-calendar-star"></i> Film in uscita</h4>
+                                    </div>
+                                    <div class="option-body">
+                                        <p>Importa film di prossima uscita o appena usciti nelle sale cinematografiche.</p>
+                                        <form method="post" asp-page-handler="ImportUpcoming">
+                                            <div class="mb-3">
+                                                <label class="form-label">Periodo:</label>
+                                                <select class="form-select" name="period">
+                                                    <option value="upcoming">Prossime uscite</option>
+                                                    <option value="now_playing">Attualmente al cinema</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                <i class="bi bi-cloud-download"></i> Importa
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <div class="advanced-option-card">
+                                    <div class="option-header">
+                                        <h4><i class="bi bi-trophy"></i> Film più votati</h4>
+                                    </div>
+                                    <div class="option-body">
+                                        <p>Importa i film con il punteggio più alto su TMDB, veri capolavori.</p>
+                                        <form method="post" asp-page-handler="ImportTopRated">
+                                            <div class="mb-3">
+                                                <label class="form-label">Numero di pagine:</label>
+                                                <select class="form-select" name="pages">
+                                                    <option value="1">1 pagina (20 film)</option>
+                                                    <option value="2" selected>2 pagine (40 film)</option>
+                                                    <option value="3">3 pagine (60 film)</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                <i class="bi bi-cloud-download"></i> Importa
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <div class="advanced-option-card">
+                                    <div class="option-header">
+                                        <h4><i class="bi bi-calendar-check"></i> Film per anno</h4>
+                                    </div>
+                                    <div class="option-body">
+                                        <p>Importa film usciti in un determinato anno per completare il catalogo storico.</p>
+                                        <form method="post" asp-page-handler="ImportByYear">
+                                            <div class="mb-3">
+                                                <label class="form-label">Anno:</label>
+                                                <select class="form-select" name="year">
+                                                    @for (int year = DateTime.Now.Year; year >= 1950; year--)
+                                                    {
+                                                        <option value="@year">@year</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                <i class="bi bi-cloud-download"></i> Importa
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <div class="advanced-option-card">
+                                    <div class="option-header">
+                                        <h4><i class="bi bi-tools"></i> Manutenzione</h4>
+                                    </div>
+                                    <div class="option-body">
+                                        <p>Aggiorna i metadati dei film già presenti nel database con le informazioni TMDB più recenti.</p>
+                                        <form method="post" asp-page-handler="UpdateExisting">
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="updatePosters" id="updatePosters" checked>
+                                                    <label class="form-check-label" for="updatePosters">Aggiorna locandine</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="updateInfo" id="updateInfo" checked>
+                                                    <label class="form-check-label" for="updateInfo">Aggiorna informazioni</label>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-warning btn-sm w-100">
+                                                <i class="bi bi-arrow-repeat"></i> Aggiorna esistenti
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Film Recentemente Importati -->
+    @if (Model.ImportedMovies.Count > 0)
+    {
+        <div class="recently-imported">
+            <div class="imported-header">
+                <h3>
+                    <i class="bi bi-check-circle"></i>
+                    Film Recentemente Importati
+                </h3>
+                <span class="badge bg-success">@Model.ImportedMovies.Count film</span>
+            </div>
+            
+            <div class="imported-grid">
+                @foreach (var movie in Model.ImportedMovies)
+                {
+                    <div class="imported-movie-card">
+                        <div class="movie-poster">
+                            @if (!string.IsNullOrEmpty(movie.PosterPath))
+                            {
+                                <img src="@movie.PosterPath" alt="@movie.Title" loading="lazy">
+                            }
+                            else
+                            {
+                                <div class="no-poster-lg">
+                                    <i class="bi bi-film"></i>
+                                </div>
+                            }
+                            <div class="movie-rating-overlay">
+                                <i class="bi bi-star-fill"></i>
+                                <span>@movie.Rating.ToString("0.0")</span>
+                            </div>
+                        </div>
+                        <div class="movie-info-card">
+                            <h5 class="movie-title" title="@movie.Title">@movie.Title</h5>
+                            <div class="movie-meta">
+                                <span class="movie-year">
+                                    <i class="bi bi-calendar3"></i>
+                                    @(movie.ReleaseDate?.Year.ToString() ?? "N/A")
+                                </span>
+                                @if (movie.Genres != null && movie.Genres.Length > 0)
+                                {
+                                    <span class="movie-genre">
+                                        <i class="bi bi-tag"></i>
+                                        @movie.Genres[0]
+                                    </span>
+                                }
+                            </div>
+                            <a asp-page="/Movies/Details" asp-route-id="@movie.Id" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                                <i class="bi bi-eye"></i>
+                                Visualizza
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    
+    <!-- Loader per importazione in corso -->
+    <div class="import-loader" id="importLoader">
+        <div class="loader-content">
+            <div class="spinner-border text-light" role="status">
+                <span class="visually-hidden">Importazione in corso...</span>
+            </div>
+            <h4>Importazione in corso</h4>
+            <p id="loaderMessage">Stiamo importando i film da TMDB...</p>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" id="importProgressBar" style="width: 0%"></div>
+            </div>
+            <p class="small text-light-emphasis" id="importProgressText">Inizializzazione...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Anteprima Film da Importare</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="previewModalBody">
+                <div class="preview-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Caricamento anteprima...</span>
+                    </div>
+                    <p>Caricamento anteprima...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                <button type="button" class="btn btn-primary" id="confirmImportBtn">Conferma Importazione</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script>
+        // Oggetto per simulare l'API - in produzione questo verrebbe sostituito da chiamate AJAX reali
+        const tmdbApi = {
+            getPreviewMovies: function(type, params) {
+                return new Promise(resolve => {
+                    // Simuliamo una chiamata API
+                    setTimeout(() => {
+                        // Dati di esempio
+                        const movies = [
+                            {
+                                title: "Dune: Parte Due",
+                                year: "2024",
+                                rating: "8.4",
+                                poster: "https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg",
+                                overview: "Paul Atreides si unisce ai Fremen e inizia un viaggio spirituale e politico per diventare Muad'Dib, mentre cerca vendetta contro i cospiratori che hanno distrutto la sua famiglia."
+                            },
+                            {
+                                title: "Oppenheimer",
+                                year: "2023",
+                                rating: "8.2",
+                                poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+                                overview: "La storia del fisico J. Robert Oppenheimer e del suo ruolo nello sviluppo della bomba atomica."
+                            },
+                            {
+                                title: "Joker",
+                                year: "2019",
+                                rating: "8.3",
+                                poster: "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg",
+                                overview: "La storia delle origini di Arthur Fleck, un uomo ignorato dalla società la cui discesa nella follia lo porta a trasformarsi nel famoso supercriminale."
+                            },
+                            {
+                                title: "Barbie",
+                                year: "2023",
+                                rating: "7.1",
+                                poster: "https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg",
+                                overview: "Barbie viene espulsa da Barbieland perché non è abbastanza perfetta. Inizia un'avventura nel mondo reale per trovare la vera felicità."
+                            },
+                            {
+                                title: "Il Gladiatore II",
+                                year: "2024",
+                                rating: "7.8",
+                                poster: "https://image.tmdb.org/t/p/w500/6Dio_tmU5aIjfYdP1GjqPxFO2Gb.jpg",
+                                overview: "Segue la storia di Lucius, figlio di Lucilla e nipote di Commodo, vent'anni dopo gli eventi del primo film."
+                            }
+                        ];
+                        resolve(movies);
+                    }, 1000); // Simuliamo un ritardo di 1 secondo
+                });
+            },
+            
+            simulateImport: function(type, params) {
+                return new Promise(resolve => {
+                    let progress = 0;
+                    const totalSteps = 10;
+                    
+                    // Simuliamo i progressi
+                    const interval = setInterval(() => {
+                        progress += 10;
+                        
+                        // Aggiornamento del messaggio in base allo stato
+                        let message = "";
+                        if (progress < 20) {
+                            message = "Connessione a TMDB in corso...";
+                        } else if (progress < 40) {
+                            message = "Recupero informazioni film...";
+                        } else if (progress < 60) {
+                            message = "Download delle locandine...";
+                        } else if (progress < 80) {
+                            message = "Memorizzazione dei dati...";
+                        } else {
+                            message = "Finalizzazione importazione...";
+                        }
+                        
+                        // Aggiorniamo la UI
+                        document.getElementById("importProgressBar").style.width = `${progress}%`;
+                        document.getElementById("importProgressText").innerText = `${progress}% completato - ${message}`;
+                        
+                        // Se abbiamo finito, concludiamo
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            setTimeout(() => {
+                                resolve();
+                            }, 500);
+                        }
+                    }, 500);
+                });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestione dei pulsanti di anteprima
+            const previewPopularButton = document.getElementById('previewPopularButton');
+            const previewGenreButton = document.getElementById('previewGenreButton');
+            const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+            
+            // Anteprima film popolari
+            previewPopularButton.addEventListener('click', async function() {
+                const pages = document.querySelector('input[name="pages"]:checked').value;
+                
+                // Mostra il modal
+                previewModal.show();
+                
+                // Aggiorna il titolo del modal
+                document.getElementById('previewModalLabel').innerText = 'Anteprima Film Popolari';
+                
+                // Mostra il loader
+                document.getElementById('previewModalBody').innerHTML = `
+                    <div class="preview-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Caricamento anteprima...</span>
+                        </div>
+                        <p>Caricamento anteprima dei film popolari...</p>
+                    </div>
+                `;
+                
+                try {
+                    // Simuliamo il recupero dei dati
+                    const movies = await tmdbApi.getPreviewMovies('popular', { pages });
+                    
+                    // Creiamo l'anteprima
+                    let previewHtml = `
+                        <div class="preview-info mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Verranno importati circa ${parseInt(pages) * 20} film popolari. Di seguito un'anteprima di alcuni film.
+                            </div>
+                        </div>
+                        <div class="preview-grid">
+                    `;
+                    
+                    // Aggiungiamo i film
+                    movies.forEach(movie => {
+                        previewHtml += `
+                            <div class="preview-movie-card">
+                                <div class="preview-poster">
+                                    <img src="${movie.poster}" alt="${movie.title}" onerror="this.onerror=null; this.src='/images/no-poster.png';">
+                                    <div class="preview-rating">
+                                        <i class="bi bi-star-fill"></i> ${movie.rating}
+                                    </div>
+                                </div>
+                                <div class="preview-info">
+                                    <h5>${movie.title}</h5>
+                                    <div class="preview-year">${movie.year}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    previewHtml += `</div>`;
+                    
+                    // Aggiorniamo il contenuto
+                    document.getElementById('previewModalBody').innerHTML = previewHtml;
+                    
+                    // Colleghiamo il pulsante di conferma
+                    document.getElementById('confirmImportBtn').onclick = function() {
+                        document.getElementById('importPopularForm').submit();
+                        previewModal.hide();
+                        showImportLoader();
+                    };
+                    
+                } catch (error) {
+                    document.getElementById('previewModalBody').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Errore nel caricamento dell'anteprima: ${error.message}
+                        </div>
+                    `;
+                }
+            });
+            
+            // Anteprima film per genere
+            previewGenreButton.addEventListener('click', async function() {
+                const genreSelect = document.getElementById('genreSelect');
+                const genreName = genreSelect.options[genreSelect.selectedIndex].text;
+                const pages = document.querySelector('input[name="pages"][form="importGenreForm"]:checked').value;
+                
+                // Mostra il modal
+                previewModal.show();
+                
+                // Aggiorna il titolo del modal
+                document.getElementById('previewModalLabel').innerText = `Anteprima Film del Genere: ${genreName}`;
+                
+                // Mostra il loader
+                document.getElementById('previewModalBody').innerHTML = `
+                    <div class="preview-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Caricamento anteprima...</span>
+                        </div>
+                        <p>Caricamento anteprima dei film di genere ${genreName}...</p>
+                    </div>
+                `;
+                
+                try {
+                    // Simuliamo il recupero dei dati
+                    const movies = await tmdbApi.getPreviewMovies('genre', { genreId: genreSelect.value, pages });
+                    
+                    // Creiamo l'anteprima
+                    let previewHtml = `
+                        <div class="preview-info mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Verranno importati circa ${parseInt(pages) * 20} film del genere <strong>${genreName}</strong>. Di seguito un'anteprima di alcuni film.
+                            </div>
+                        </div>
+                        <div class="preview-grid">
+                    `;
+                    
+                    // Aggiungiamo i film
+                    movies.forEach(movie => {
+                        previewHtml += `
+                            <div class="preview-movie-card">
+                                <div class="preview-poster">
+                                    <img src="${movie.poster}" alt="${movie.title}" onerror="this.onerror=null; this.src='/images/no-poster.png';">
+                                    <div class="preview-rating">
+                                        <i class="bi bi-star-fill"></i> ${movie.rating}
+                                    </div>
+                                </div>
+                                <div class="preview-info">
+                                    <h5>${movie.title}</h5>
+                                    <div class="preview-year">${movie.year}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    previewHtml += `</div>`;
+                    
+                    // Aggiorniamo il contenuto
+                    document.getElementById('previewModalBody').innerHTML = previewHtml;
+                    
+                    // Colleghiamo il pulsante di conferma
+                    document.getElementById('confirmImportBtn').onclick = function() {
+                        document.getElementById('importGenreForm').submit();
+                        previewModal.hide();
+                        showImportLoader();
+                    };
+                    
+                } catch (error) {
+                    document.getElementById('previewModalBody').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Errore nel caricamento dell'anteprima: ${error.message}
+                        </div>
+                    `;
+                }
+            });
+            
+            // Mostra il loader di importazione
+            function showImportLoader() {
+                document.getElementById('importLoader').classList.add('active');
+                
+                // Simulazione dell'importazione
+                tmdbApi.simulateImport().then(() => {
+                    // Nascondi il loader e ricarica la pagina per mostrare i risultati
+                    document.getElementById('importLoader').classList.remove('active');
+                    // In un contesto reale, potremmo reindirizzare o aggiornare la pagina
+                    // window.location.reload();
+                });
+            }
+            
+            // Assegniamo gli eventi di submit ai form
+            document.getElementById('importPopularForm').addEventListener('submit', function(e) {
+                // In un'applicazione reale, non bloccheremmo il submit
+                // ma lo useremmo per avviare l'importazione
+                e.preventDefault();
+                showImportLoader();
+            });
+            
+            document.getElementById('importGenreForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                showImportLoader();
+            });
+            
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                // Dimostrativo: mostriamo un loader
+                const searchButton = document.getElementById('searchButton');
+                searchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Ricerca...';
+                searchButton.disabled = true;
+                
+                // In un contesto reale, lasceremmo il form fare il submit
+                // Qui simuliamo per la demo
+                e.preventDefault();
+                
+                setTimeout(() => {
+                    searchButton.innerHTML = 'Cerca';
+                    searchButton.disabled = false;
+                    
+                    // Mostro un messaggio finto di ricerca
+                    const searchResults = document.getElementById('searchResults');
+                    searchResults.innerHTML = `
+                        <div class="search-results-header">
+                            <h4>Risultati della Ricerca</h4>
+                            <span class="results-count">5 film trovati</span>
+                        </div>
+                        
+                        <div class="search-results">
+                            <!-- Risultati di esempio -->
+                        </div>
+                    `;
+                    
+                    // Aggiungiamo dei film di esempio
+                    const searchResultsContainer = searchResults.querySelector('.search-results');
+                    tmdbApi.getPreviewMovies().then(movies => {
+                        movies.forEach(movie => {
+                            const resultItem = document.createElement('div');
+                            resultItem.className = 'search-result-item';
+                            resultItem.innerHTML = `
+                                <div class="movie-thumbnail">
+                                    <img src="${movie.poster}" alt="${movie.title}" onerror="this.onerror=null; this.src='/images/no-poster.png';">
+                                </div>
+                                <div class="movie-info">
+                                    <h5 class="movie-title">${movie.title}</h5>
+                                    <div class="movie-meta">
+                                        <span class="movie-year">
+                                            <i class="bi bi-calendar3"></i>
+                                            ${movie.year}
+                                        </span>
+                                        <span class="movie-rating">
+                                            <i class="bi bi-star-fill"></i>
+                                            ${movie.rating}
+                                            <span class="vote-count">(2,345)</span>
+                                        </span>
+                                    </div>
+                                    <p class="movie-overview">${movie.overview}</p>
+                                </div>
+                                <div class="movie-action">
+                                    <button type="button" class="btn btn-primary import-btn" onclick="simulateImportSingle(this)">
+                                        <i class="bi bi-cloud-download"></i>
+                                        <span>Importa</span>
+                                    </button>
+                                </div>
+                            `;
+                            searchResultsContainer.appendChild(resultItem);
+                        });
+                    });
+                }, 1500);
+            });
+            
+            // Inizializziamo il grafico di distribuzione generi se il canvas esiste
+            const genreDistributionChart = document.getElementById('genreDistribution');
+            if (genreDistributionChart) {
+                const ctx = document.createElement('canvas');
+                ctx.id = 'genreChart';
+                genreDistributionChart.appendChild(ctx);
+                
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Azione', 'Commedia', 'Dramma', 'Fantascienza', 'Avventura', 'Altri'],
+                        datasets: [{
+                            data: [25, 20, 18, 15, 12, 10],
+                            backgroundColor: [
+                                '#4361ee', '#3a0ca3', '#f72585', 
+                                '#4cc9f0', '#7209b7', '#adb5bd'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    boxWidth: 15,
+                                    padding: 15,
+                                    color: '#212529'
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+        });
+        
+        // Funzione globale per simulare l'importazione di un singolo film
+        function simulateImportSingle(button) {
+            // Disabilitiamo il pulsante e mostriamo un loader
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Importazione...';
+            
+            // Simuliamo l'importazione
+            setTimeout(() => {
+                button.innerHTML = '<i class="bi bi-check-circle"></i> Importato';
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-success');
+            }, 1500);
+        }
+    </script>
+}
+
+@section Styles {
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --primary-light: #4cc9f0;
+            --secondary: #6c757d;
+            --success: #38b000;
+            --info: #3a86ff;
+            --warning: #ffbe0b;
+            --danger: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            --box-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+            
+            --transition: all 0.3s ease;
+        }
+        
+        /* Stili di base */
+        .import-movies-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        /* Header */
+        .page-header {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--box-shadow-sm);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .header-info h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+            padding: 0.6rem 1.25rem;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-outline-primary {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+        
+        /* Alert */
+        .alert {
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            padding: 0;
+            border: none;
+        }
+        
+        .alert-content {
+            display: flex;
+            padding: 1rem 1.25rem;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .alert-content i {
+            font-size: 1.5rem;
+        }
+        
+        .alert-content p {
+            margin-bottom: 0;
+        }
+        
+        .alert-content strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        
+        .alert-success {
+            background-color: rgba(56, 176, 0, 0.1);
+            color: var(--success);
+        }
+        
+        .alert-danger {
+            background-color: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+        }
+        
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--box-shadow-sm);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-info {
+            margin-bottom: 1.25rem;
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            display: block;
+        }
+        
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+        
+        .progress-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: var(--gray-200);
+            flex: 1;
+        }
+        
+        .percentage {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+        
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            margin-top: auto;
+        }
+        
+        .api-status.active {
+            color: var(--success);
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+        
+        /* Colori specifici per le card */
+        .stat-card.movies .stat-icon {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .stat-card.movies .progress-bar {
+            background-color: var(--primary);
+        }
+        
+        .stat-card.genres .stat-icon {
+            background-color: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+        }
+        
+        .stat-card.genres .progress-bar {
+            background-color: var(--danger);
+        }
+        
+        .stat-card.tmdb .stat-icon {
+            background-color: rgba(255, 190, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .stat-card.tmdb .progress-bar {
+            background-color: var(--warning);
+        }
+        
+        .stat-card.api .stat-icon {
+            background-color: rgba(58, 134, 255, 0.1);
+            color: var(--info);
+        }
+        
+        /* Import Tabs */
+        .import-tabs-container {
+            margin-bottom: 2rem;
+        }
+        
+        .import-tabs {
+            border-bottom: none;
+            gap: 0.5rem;
+        }
+        
+        .import-tabs .nav-link {
+            border: none;
+                color: var(--gray-700);
+                border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+                padding: 0.75rem 1.25rem;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                transition: var(--transition);
+            }
+
+                .import-tabs .nav-link:hover {
+                    color: var(--primary);
+                    border-color: transparent;
+                }
+
+                .import-tabs .nav-link.active {
+                    color: var(--primary);
+                    background-color: white;
+                    border-color: transparent;
+                    font-weight: 600;
+                }
+
+                .import-tabs .nav-link i {
+                    font-size: 1.1rem;
+                }
+
+        .import-tab-content {
+            margin-top: -1px;
+        }
+
+        /* Import Card */
+        .import-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-sm);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .import-card-body {
+            padding: 2rem;
+        }
+
+        .import-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-800);
+        }
+
+        .import-description {
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+        }
+
+        /* Pages Selector */
+        .pages-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .form-check-inline {
+            margin-top: 0.5rem;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .import-options h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--gray-700);
+        }
+
+        /* Form Switch */
+        .form-check-label {
+            color: var(--gray-700);
+        }
+
+        .form-switch .form-check-input:checked {
+            background-image: linear-gradient(to right, var(--primary-dark), var(--primary));
+        }
+
+        /* Import Illustration */
+        .import-illustration {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .illustration-image {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .import-info-card {
+            background-color: var(--gray-100);
+            padding: 1.25rem;
+            border-radius: var(--border-radius-sm);
+            width: 100%;
+        }
+
+            .import-info-card h5 {
+                font-weight: 600;
+                margin-bottom: 0.75rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--gray-800);
+            }
+
+            .import-info-card p {
+                color: var(--gray-600);
+                margin-bottom: 0;
+            }
+
+        /* Genre Distribution */
+        .genre-distribution {
+            width: 100%;
+            height: 200px;
+            margin: 2rem 0;
+        }
+
+        /* Search Container */
+        .search-container {
+            margin-bottom: 2rem;
+        }
+
+        .search-icon {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .search-input {
+            border-left: none;
+            padding-left: 0;
+        }
+
+        .search-options {
+            margin-top: 1rem;
+        }
+
+        /* Search Results */
+        .search-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+            .search-results-header h4 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin-bottom: 0;
+                color: var(--gray-800);
+            }
+
+        .results-count {
+            background-color: var(--primary-light);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .search-results {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .search-result-item {
+            display: flex;
+            gap: 1.25rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+            .search-result-item:last-child {
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+
+        .movie-thumbnail {
+            width: 110px;
+            height: 165px;
+            flex-shrink: 0;
+            overflow: hidden;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--box-shadow-sm);
+            background-color: var(--gray-100);
+            position: relative;
+        }
+
+            .movie-thumbnail img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .no-poster {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-400);
+            font-size: 2rem;
+        }
+
+        .movie-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .movie-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-800);
+        }
+
+        .movie-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .movie-year, .movie-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .movie-rating {
+            color: var(--warning);
+            font-weight: 500;
+        }
+
+        .vote-count {
+            color: var(--gray-500);
+            font-weight: normal;
+        }
+
+        .movie-overview {
+            color: var(--gray-600);
+            margin-bottom: 0;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .movie-action {
+            display: flex;
+            align-items: flex-start;
+            padding-top: 0.5rem;
+        }
+
+        .import-btn {
+            white-space: nowrap;
+        }
+
+        /* Empty Search */
+        .empty-search {
+            text-align: center;
+            padding: 3rem 0;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background-color: var(--gray-100);
+            color: var(--gray-400);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem;
+        }
+
+        .empty-search h5 {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-700);
+        }
+
+        .empty-search p {
+            color: var(--gray-600);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Advanced Options */
+        .advanced-option-card {
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            height: 100%;
+            transition: var(--transition);
+        }
+
+            .advanced-option-card:hover {
+                border-color: var(--primary);
+                box-shadow: var(--box-shadow-sm);
+            }
+
+        .option-header {
+            padding: 1rem;
+            background-color: var(--gray-100);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+            .option-header h4 {
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--gray-800);
+            }
+
+        .option-body {
+            padding: 1rem;
+        }
+
+            .option-body p {
+                color: var(--gray-600);
+                margin-bottom: 1.25rem;
+                font-size: 0.95rem;
+            }
+
+        /* Recently Imported */
+        .recently-imported {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow-sm);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .imported-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+            .imported-header h3 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin-bottom: 0;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--gray-800);
+            }
+
+        .imported-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .imported-movie-card {
+            transition: var(--transition);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow-sm);
+            background-color: white;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+            .imported-movie-card:hover {
+                transform: translateY(-5px);
+                box-shadow: var(--box-shadow);
+            }
+
+        .movie-poster {
+            aspect-ratio: 2/3;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .movie-poster img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s ease;
+            }
+
+        .imported-movie-card:hover .movie-poster img {
+            transform: scale(1.05);
+        }
+
+        .no-poster-lg {
+            width: 100%;
+            height: 100%;
+            background-color: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-400);
+            font-size: 3rem;
+        }
+
+        .movie-rating-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: var(--warning);
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .movie-info-card {
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .movie-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-800);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .movie-meta {
+            display: flex;
+            gap: 1.25rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .movie-year, .movie-genre {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        /* Import Loader */
+        .import-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+            .import-loader.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .loader-content {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            color: white;
+        }
+
+            .loader-content h4 {
+                margin: 1rem 0;
+                font-weight: 600;
+            }
+
+            .loader-content p {
+                margin-bottom: 1.5rem;
+                color: rgba(255, 255, 255, 0.8);
+            }
+
+            .loader-content .progress {
+                height: 10px;
+                border-radius: 5px;
+                margin-bottom: 0.75rem;
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+
+            .loader-content .progress-bar {
+                background-color: var(--primary-light);
+            }
+
+        /* Preview Modal */
+        .preview-loading {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .preview-movie-card {
+            transition: var(--transition);
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
+            box-shadow: var(--box-shadow-sm);
+            background-color: white;
+        }
+
+        .preview-poster {
+            aspect-ratio: 2/3;
+            width: 100%;
+            position: relative;
+        }
+
+            .preview-poster img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .preview-rating {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: var(--warning);
+            padding: 0.2rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .preview-info {
+            padding: 0.75rem;
+        }
+
+            .preview-info h5 {
+                font-size: 0.9rem;
+                font-weight: 600;
+                margin-bottom: 0.35rem;
+                color: var(--gray-800);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+        .preview-year {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+    </style>
+}

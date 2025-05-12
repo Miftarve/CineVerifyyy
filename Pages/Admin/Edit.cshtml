@@ -1,0 +1,1026 @@
+﻿@page
+@model CineVerify.Pages.Admin.EditModel
+@{
+    ViewData["Title"] = "Modifica Utente";
+}
+
+<div class="edit-user-container">
+    <!-- Header con info utente -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="back-link">
+                <a asp-page="./Users" class="btn btn-icon" title="Torna all'elenco">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+            </div>
+            <div class="header-info">
+                <h1 class="page-title">Modifica Utente</h1>
+                <p class="user-info">@Model.Input.Nome @Model.Input.Cognome <span class="user-email">@Model.Input.Email</span></p>
+            </div>
+            <div class="user-avatar">
+                <div class="avatar-placeholder">
+                    @if (!string.IsNullOrEmpty(Model.Input.Nome) && !string.IsNullOrEmpty(Model.Input.Cognome))
+                    {
+                        <span>@(Model.Input.Nome[0])@(Model.Input.Cognome[0])</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-person"></i>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert per messaggi del server -->
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        var statusClass = Model.StatusMessage.StartsWith("Errore") ? "danger" : "success";
+        <div class="alert alert-@statusClass alert-dismissible fade show" role="alert">
+            <div class="alert-content">
+                <i class="bi bi-@(statusClass == "danger" ? "exclamation-triangle" : "check-circle")"></i>
+                <span>@Model.StatusMessage</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="edit-content">
+        <!-- Form di modifica -->
+        <div class="edit-form-container">
+            <div class="edit-form-card">
+                <div class="edit-form-header">
+                    <h2><i class="bi bi-person-gear"></i> Dettagli Utente</h2>
+                    <div class="account-badge @(Model.Input.EmailConfirmed ? "verified" : "unverified")">
+                        <i class="bi bi-@(Model.Input.EmailConfirmed ? "check-circle" : "exclamation-circle")"></i>
+                        <span>Account @(Model.Input.EmailConfirmed ? "Verificato" : "Non Verificato")</span>
+                    </div>
+                </div>
+
+                <div class="edit-form-body">
+                    <form id="editUserForm" method="post" class="needs-validation" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        <input type="hidden" asp-for="Input.Id" />
+
+                        <div class="form-section">
+                            <h3 class="section-title">Dati Personali</h3>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-field">
+                                        <label asp-for="Input.Nome">
+                                            <i class="bi bi-person"></i> Nome
+                                        </label>
+                                        <input asp-for="Input.Nome" class="form-control" required />
+                                        <span asp-validation-for="Input.Nome" class="invalid-feedback"></span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-field">
+                                        <label asp-for="Input.Cognome">
+                                            <i class="bi bi-person"></i> Cognome
+                                        </label>
+                                        <input asp-for="Input.Cognome" class="form-control" required />
+                                        <span asp-validation-for="Input.Cognome" class="invalid-feedback"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-field">
+                                <label asp-for="Input.Email">
+                                    <i class="bi bi-envelope"></i> Email
+                                </label>
+                                <div class="input-with-icon">
+                                    <input asp-for="Input.Email" class="form-control" required />
+                                    <div class="input-icon">
+                                        <i class="bi bi-envelope-fill text-primary"></i>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="Input.Email" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3 class="section-title">Accesso e Sicurezza</h3>
+
+                            <div class="form-field">
+                                <label asp-for="Input.Role">
+                                    <i class="bi bi-shield"></i> Ruolo
+                                </label>
+                                <div class="input-with-icon">
+                                    <select asp-for="Input.Role" asp-items="Model.RolesList" class="form-select" required>
+                                        <option value="">-- Seleziona un ruolo --</option>
+                                    </select>
+                                    <div class="input-icon">
+                                        <i class="bi bi-chevron-down"></i>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="Input.Role" class="invalid-feedback"></span>
+
+                                <div class="role-descriptions mt-2">
+                                    <div class="role-description" data-role="Admin">
+                                        <i class="bi bi-shield-lock text-danger"></i>
+                                        <span>Accesso completo a tutte le funzionalità del sistema</span>
+                                    </div>
+                                    <div class="role-description" data-role="Critic">
+                                        <i class="bi bi-star text-warning"></i>
+                                        <span>Autorizzato a pubblicare recensioni verificate</span>
+                                    </div>
+                                    <div class="role-description" data-role="User">
+                                        <i class="bi bi-person text-info"></i>
+                                        <span>Accesso standard alle funzionalità dell'applicazione</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-switch-field">
+                                <div class="form-check form-switch">
+                                    <input asp-for="Input.EmailConfirmed" class="form-check-input" type="checkbox" role="switch" id="emailConfirmedSwitch" />
+                                    <label class="form-check-label" for="emailConfirmedSwitch">
+                                        <i class="bi bi-envelope-check"></i> Account verificato
+                                    </label>
+                                </div>
+                                <small class="text-muted">
+                                    Attiva questa opzione se l'email è confermata o per ignorare il processo di verifica
+                                </small>
+                            </div>
+
+                            <div class="form-field">
+                                <label asp-for="Input.NewPassword">
+                                    <i class="bi bi-key"></i> Nuova Password
+                                </label>
+                                <div class="password-field">
+                                    <input asp-for="Input.NewPassword" class="form-control" id="passwordField" autocomplete="new-password" />
+                                    <button type="button" class="btn btn-outline-secondary password-toggle" tabindex="-1">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Input.NewPassword" class="invalid-feedback"></span>
+                                <small class="text-muted">Lascia vuoto per mantenere la password attuale</small>
+
+                                <div class="password-strength mt-2" id="passwordStrength" style="display:none">
+                                    <div class="strength-meter">
+                                        <div class="strength-meter-fill" id="strengthMeter"></div>
+                                    </div>
+                                    <div class="strength-text" id="strengthText">Forza password</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i>
+                                Salva modifiche
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary" id="resetButton">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                Ripristina
+                            </button>
+                            <a asp-page="./Users" class="btn btn-outline-secondary">
+                                <i class="bi bi-x"></i>
+                                Annulla
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar informativa -->
+        <div class="edit-sidebar">
+            <div class="sidebar-card">
+                <div class="sidebar-card-header">
+                    <h3><i class="bi bi-info-circle"></i> Informazioni</h3>
+                </div>
+                <div class="sidebar-card-body">
+                    <div class="info-section">
+                        <h4>Account Utente</h4>
+                        <p>In questa pagina puoi modificare i dettagli e i permessi dell'utente selezionato. Le modifiche avranno effetto immediato.</p>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div class="info-content">
+                                <strong>ID Utente:</strong> @Model.Input.Id
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>Password</h4>
+                        <p>Se non desideri modificare la password, lascia il campo vuoto. Una password sicura dovrebbe:</p>
+                        <ul class="password-tips">
+                            <li>
+                                <i class="bi bi-check-circle text-success"></i>
+                                Essere lunga almeno 8 caratteri
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle text-success"></i>
+                                Contenere lettere maiuscole e minuscole
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle text-success"></i>
+                                Includere numeri e caratteri speciali
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle text-success"></i>
+                                Non essere uguale all'email o altre info personali
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4 alert alert-warning">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle me-3 fs-3"></i>
+                            <div>
+                                <strong>Nota importante:</strong>
+                                <p class="mb-0">Cambiare il ruolo di un utente modificherà le sue autorizzazioni nel sistema.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-card mt-4">
+                <div class="sidebar-card-header">
+                    <h3><i class="bi bi-shield-lock"></i> Sicurezza</h3>
+                </div>
+                <div class="sidebar-card-body">
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-danger btn-block w-100" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                            <i class="bi bi-key me-2"></i> Reimposta Password
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-warning btn-block w-100" data-bs-toggle="modal" data-bs-target="#lockAccountModal">
+                            <i class="bi bi-lock me-2"></i> Blocca Account
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary btn-block w-100" data-bs-toggle="modal" data-bs-target="#activityLogModal">
+                            <i class="bi bi-journal-text me-2"></i> Log Attività
+                        </button>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        La visualizzazione dei log e delle statistiche complete è disponibile nel Pannello Amministrativo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal conferma uscita con modifiche non salvate -->
+<div class="modal fade" id="unsavedChangesModal" tabindex="-1" aria-labelledby="unsavedChangesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unsavedChangesModalLabel">Modifiche non salvate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <p>Ci sono modifiche non salvate. Sei sicuro di voler abbandonare questa pagina?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continua a modificare</button>
+                <a id="leavePageLink" href="./Users" class="btn btn-danger">Abbandona le modifiche</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Gestione del toggle password
+            const passwordField = document.getElementById('passwordField');
+            const togglePassword = document.querySelector('.password-toggle');
+
+            if (togglePassword) {
+                togglePassword.addEventListener('click', function () {
+                    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordField.setAttribute('type', type);
+
+                    // Cambia icona
+                    const icon = this.querySelector('i');
+                    icon.classList.toggle('bi-eye');
+                    icon.classList.toggle('bi-eye-slash');
+                });
+            }
+
+            // Controllo forza password
+            const strengthMeter = document.getElementById('strengthMeter');
+            const strengthText = document.getElementById('strengthText');
+            const strengthContainer = document.getElementById('passwordStrength');
+
+            passwordField.addEventListener('input', function () {
+                const password = this.value;
+
+                if (password.length === 0) {
+                    strengthContainer.style.display = 'none';
+                    return;
+                }
+
+                strengthContainer.style.display = 'block';
+
+                // Calcola il punteggio
+                let score = 0;
+
+                // Lunghezza
+                if (password.length >= 8) score += 1;
+                if (password.length >= 12) score += 1;
+
+                // Complessità
+                if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
+                if (/[0-9]/.test(password)) score += 1;
+                if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+                // Aggiorna l'indicatore
+                let strengthClass = '';
+                let strengthMessage = '';
+
+                switch (score) {
+                    case 0:
+                    case 1:
+                        strengthClass = 'very-weak';
+                        strengthMessage = 'Molto debole';
+                        break;
+                    case 2:
+                        strengthClass = 'weak';
+                        strengthMessage = 'Debole';
+                        break;
+                    case 3:
+                        strengthClass = 'medium';
+                        strengthMessage = 'Media';
+                        break;
+                    case 4:
+                        strengthClass = 'strong';
+                        strengthMessage = 'Forte';
+                        break;
+                    case 5:
+                        strengthClass = 'very-strong';
+                        strengthMessage = 'Molto forte';
+                        break;
+                }
+
+                // Rimuovi tutte le classi precedenti
+                strengthMeter.className = 'strength-meter-fill';
+                // Aggiungi la nuova classe
+                strengthMeter.classList.add(strengthClass);
+                // Aggiorna il testo
+                strengthText.textContent = strengthMessage;
+
+                // Imposta la larghezza in base al punteggio
+                const percentage = (score / 5) * 100;
+                strengthMeter.style.width = `${percentage}%`;
+            });
+
+            // Gestione descrizioni dei ruoli
+            const roleSelector = document.querySelector('[name="Input.Role"]');
+            const roleDescriptions = document.querySelectorAll('.role-description');
+
+            function updateRoleDescription() {
+                const selectedRole = roleSelector.value;
+
+                // Nascondi tutte le descrizioni
+                roleDescriptions.forEach(desc => {
+                    desc.style.display = 'none';
+                });
+
+                // Mostra la descrizione selezionata
+                if (selectedRole) {
+                    const activeDesc = document.querySelector(`.role-description[data-role="${selectedRole}"]`);
+                    if (activeDesc) {
+                        activeDesc.style.display = 'flex';
+                    }
+                }
+            }
+
+            if (roleSelector) {
+                roleSelector.addEventListener('change', updateRoleDescription);
+                // Esegui all'avvio
+                updateRoleDescription();
+            }
+
+            // Controllo modifiche non salvate
+            const form = document.getElementById('editUserForm');
+            const originalFormData = new FormData(form);
+            let formChanged = false;
+
+            // Monitora i cambiamenti nel form
+            const formInputs = form.querySelectorAll('input, select, textarea');
+            formInputs.forEach(input => {
+                input.addEventListener('change', () => {
+                    const currentFormData = new FormData(form);
+                    formChanged = false;
+
+                    // Confronta i dati originali con quelli attuali
+                    for (let pair of currentFormData.entries()) {
+                        const key = pair[0];
+                        const value = pair[1];
+
+                        if (key === 'Input.NewPassword') {
+                            // Per la password, controlliamo solo se è stata inserita
+                            if (value !== '') {
+                                formChanged = true;
+                                break;
+                            }
+                        } else if (originalFormData.get(key) !== value) {
+                            formChanged = true;
+                            break;
+                        }
+                    }
+                });
+            });
+
+            // Impedisci di uscire se ci sono modifiche non salvate
+            window.addEventListener('beforeunload', function (e) {
+                if (formChanged) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+
+            // Gestione del pulsante annulla
+            const cancelButton = document.querySelector('a[href="./Users"]');
+            if (cancelButton) {
+                cancelButton.addEventListener('click', function (e) {
+                    if (formChanged) {
+                        e.preventDefault();
+                        const modal = new bootstrap.Modal(document.getElementById('unsavedChangesModal'));
+                        modal.show();
+                    }
+                });
+            }
+
+            // Gestione del pulsante ripristina
+            const resetButton = document.getElementById('resetButton');
+            if (resetButton) {
+                resetButton.addEventListener('click', function () {
+                    // Ripristina l'indicatore di forza password
+                    strengthContainer.style.display = 'none';
+
+                    // Reset delle descrizioni ruoli
+                    setTimeout(() => {
+                        updateRoleDescription();
+                    }, 10);
+
+                    // Reset dello stato di modifica
+                    setTimeout(() => {
+                        formChanged = false;
+                    }, 10);
+                });
+            }
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        /* ===== VARIABILI ===== */
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --primary-light: #4cc9f0;
+            --secondary: #6c757d;
+            --success: #38b000;
+            --info: #3a86ff;
+            --warning: #ffaa00;
+            --danger: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --border-radius: 10px;
+            --border-radius-sm: 6px;
+            --border-radius-lg: 16px;
+            --shadow-sm: 0 2px 5px rgba(0,0,0,0.05);
+            --shadow: 0 5px 15px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        /* ===== LAYOUT GENERALE ===== */
+        .edit-user-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .page-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .back-link {
+            flex-shrink: 0;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 1px solid var(--gray-300);
+            background: white;
+            color: var(--gray-700);
+            transition: var(--transition);
+        }
+
+            .btn-icon:hover {
+                background: var(--gray-100);
+                color: var(--primary);
+                border-color: var(--primary);
+            }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 0.35rem 0;
+            color: var(--gray-800);
+        }
+
+        .user-info {
+            margin: 0;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .user-email {
+            color: var(--primary);
+            margin-left: 0.5rem;
+        }
+
+        .user-avatar {
+            flex-shrink: 0;
+        }
+
+        .avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4361ee, #3a0ca3);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 500;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .edit-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 1.5rem;
+        }
+
+        /* ===== FORM DI MODIFICA ===== */
+        .edit-form-card {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .edit-form-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .edit-form-header h2 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                color: var(--gray-800);
+            }
+
+        .account-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+            .account-badge.verified {
+                background-color: rgba(56, 176, 0, 0.1);
+                color: var(--success);
+            }
+
+            .account-badge.unverified {
+                background-color: rgba(255, 170, 0, 0.1);
+                color: var(--warning);
+            }
+
+        .edit-form-body {
+            padding: 1.5rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+            .form-section:last-child {
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 1.25rem 0;
+            color: var(--gray-700);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-field {
+            margin-bottom: 1.25rem;
+        }
+
+            .form-field label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+                color: var(--gray-700);
+            }
+
+                .form-field label i {
+                    color: var(--primary);
+                    margin-right: 0.35rem;
+                }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+            .input-with-icon .form-control,
+            .input-with-icon .form-select {
+                padding-right: 2.5rem;
+            }
+
+        .input-icon {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            color: var(--gray-500);
+            pointer-events: none;
+        }
+
+        .form-switch-field {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-check-label {
+            font-weight: 500;
+        }
+
+            .form-check-label i {
+                color: var(--primary);
+                margin-right: 0.35rem;
+            }
+
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            padding: 0.65rem 1.25rem;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+            .btn-primary:hover {
+                background-color: var(--primary-dark);
+                border-color: var(--primary-dark);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+            }
+
+        .btn-outline-secondary {
+            border-color: var(--gray-300);
+        }
+
+            .btn-outline-secondary:hover {
+                background-color: var(--gray-100);
+                border-color: var(--gray-400);
+            }
+
+        /* ===== PASSWORD FIELD ===== */
+        .password-field {
+            position: relative;
+            display: flex;
+        }
+
+            .password-field .form-control {
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+        .password-toggle {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+
+        .password-strength {
+            margin-top: 0.5rem;
+        }
+
+        .strength-meter {
+            height: 4px;
+            background-color: var(--gray-200);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .strength-meter-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+
+            .strength-meter-fill.very-weak {
+                background-color: #ff4d4d;
+                width: 20%;
+            }
+
+            .strength-meter-fill.weak {
+                background-color: #ffa64d;
+                width: 40%;
+            }
+
+            .strength-meter-fill.medium {
+                background-color: #ffdb4d;
+                width: 60%;
+            }
+
+            .strength-meter-fill.strong {
+                background-color: #a3e635;
+                width: 80%;
+            }
+
+            .strength-meter-fill.very-strong {
+                background-color: #38b000;
+                width: 100%;
+            }
+
+        .strength-text {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            margin-top: 0.35rem;
+        }
+
+        /* ===== ROLE DESCRIPTIONS ===== */
+        .role-descriptions {
+            margin-top: 0.75rem;
+        }
+
+        .role-description {
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.85rem;
+            background-color: var(--gray-100);
+            border-radius: var(--border-radius-sm);
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+            .role-description i {
+                font-size: 1.1rem;
+            }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar-card {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar-card-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+            .sidebar-card-header h3 {
+                font-size: 1.15rem;
+                font-weight: 600;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 0.65rem;
+                color: var(--gray-800);
+            }
+
+        .sidebar-card-body {
+            padding: 1.25rem;
+        }
+
+        .info-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+            .info-section:last-child {
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+
+            .info-section h4 {
+                font-size: 1rem;
+                font-weight: 600;
+                margin: 0 0 0.75rem 0;
+                color: var(--gray-700);
+            }
+
+            .info-section p {
+                color: var(--gray-600);
+                margin-bottom: 1rem;
+            }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .info-content {
+            flex: 1;
+            font-size: 0.95rem;
+            color: var(--gray-700);
+        }
+
+        .password-tips {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .password-tips li {
+                display: flex;
+                align-items: center;
+                gap: 0.65rem;
+                margin-bottom: 0.5rem;
+                font-size: 0.9rem;
+                color: var(--gray-600);
+            }
+
+        /* ===== ACTION BUTTONS ===== */
+        .btn-block {
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .btn-outline-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(247, 37, 133, 0.2);
+        }
+
+        .btn-outline-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 170, 0, 0.2);
+        }
+
+        /* ===== MODAL ===== */
+        .modal-header {
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+            .modal-icon.warning {
+                background-color: rgba(255, 170, 0, 0.1);
+                color: var(--warning);
+            }
+
+        .modal-body {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        /* ===== ALERTS ===== */
+        .alert {
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+        }
+
+            .alert-content i {
+                font-size: 1.5rem;
+            }
+
+        .alert-success {
+            background-color: rgba(56, 176, 0, 0.1);
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-danger {
+            background-color: rgba(247, 37, 133, 0.1);
+            border-left: 4px solid var(--danger);
+        }
+    </style>
+}

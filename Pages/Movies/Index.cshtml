@@ -1,0 +1,1122 @@
+﻿@page
+@model CineVerify.Pages.Movies.IndexModel
+@{
+    ViewData["Title"] = "Esplora Film";
+}
+
+<!-- Hero Section con Sfondo Cinematografico -->
+<div class="movie-hero-section">
+    <div class="container">
+        <div class="hero-content text-center">
+            <h1 class="display-4 hero-title mb-4">Esplora la nostra collezione di film</h1>
+            <p class="lead hero-subtitle mb-5">Trova i tuoi preferiti, scopri nuovi titoli e approfondisci con recensioni e analisi</p>
+
+            <!-- Search & Filter Card -->
+            <div class="search-filter-container">
+                <form method="get" class="search-form">
+                    <div class="row g-3 align-items-center justify-content-center">
+                        <div class="col-md-6 col-lg-5">
+                            <div class="search-input-wrapper">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" class="form-control search-input" name="searchString"
+                                       value="@Model.SearchQuery" placeholder="Cerca per titolo, descrizione...">
+                            </div>
+                        </div>
+                       
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary search-btn px-4">
+                                <i class="bi bi-search me-2"></i>Cerca
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animated particles overlay for the hero section -->
+    <div class="particles-container">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+</div>
+
+<!-- Sezione delle categorie popolari -->
+<div class="container popular-categories-container">
+    <h2 class="section-title">Categorie Popolari</h2>
+    <div class="category-chips">
+        @foreach (var genre in Model.AvailableGenres.Take(8))
+        {
+            <a asp-page="./Index" asp-route-genreFilter="@genre" class="category-chip @(Model.GenreFilter == genre ? "active" : "")">
+                <span class="category-icon">
+                    @switch (genre.ToLower())
+                    {
+                        case "azione":
+                            <i class="bi bi-lightning-charge"></i>
+                            break;
+                        case "commedia":
+                            <i class="bi bi-emoji-laughing"></i>
+                            break;
+                        case "dramma":
+                            <i class="bi bi-emoji-frown"></i>
+                            break;
+                        case "horror":
+                            <i class="bi bi-moon-stars"></i>
+                            break;
+                        case "fantascienza":
+                            <i class="bi bi-rocket"></i>
+                            break;
+                        case "animazione":
+                            <i class="bi bi-stars"></i>
+                            break;
+                        case "thriller":
+                            <i class="bi bi-eye"></i>
+                            break;
+                        default:
+                            <i class="bi bi-film"></i>
+                            break;
+                    }
+                </span>
+                <span class="category-name">@genre</span>
+            </a>
+        }
+    </div>
+</div>
+
+<div class="container movie-listing-container">
+    <!-- Risultati Filtro Info -->
+    @if (!string.IsNullOrEmpty(Model.SearchQuery) || !string.IsNullOrEmpty(Model.GenreFilter))
+    {
+        <div class="filter-status mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="filter-label">Risultati per:</span>
+                    @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                    {
+                        <span class="filter-tag">
+                            <i class="bi bi-search me-1"></i> "@Model.SearchQuery"
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.GenreFilter))
+                    {
+                        <span class="filter-tag">
+                            <i class="bi bi-tag-fill me-1"></i> @Model.GenreFilter
+                        </span>
+                    }
+                </div>
+                <a asp-page="./Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-lg me-1"></i>Reset filtri
+                </a>
+            </div>
+        </div>
+    }
+
+    <!-- Risultati -->
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+        @foreach (var movie in Model.Movies)
+        {
+            <div class="col movie-item" data-aos="fade-up">
+                <div class="movie-card">
+                    <a asp-page="./Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                        <div class="movie-poster-container">
+                            @if (!string.IsNullOrEmpty(movie.PosterPath))
+                            {
+                                <img src="@movie.PosterPath" alt="@movie.Title" class="movie-poster-img" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="no-poster">
+                                    <i class="bi bi-film"></i>
+                                    <span>Nessuna immagine</span>
+                                </div>
+                            }
+
+                            <div class="movie-rating-badge">
+                                <i class="bi bi-star-fill"></i>
+                                <span>@movie.Rating.ToString("0.0")</span>
+                            </div>
+
+                            @if (movie.IsVerified)
+                            {
+                                <div class="verified-badge" title="Film verificato">
+                                    <i class="bi bi-patch-check-fill"></i>
+                                </div>
+                            }
+
+                            <div class="movie-overlay">
+                                <div class="overlay-content">
+                                    <span class="view-details-btn">
+                                        <i class="bi bi-eye me-2"></i>Visualizza Dettagli
+                                    </span>
+
+                                    @if (movie.Genres != null && movie.Genres.Length > 0)
+                                    {
+                                        <div class="overlay-genres">
+                                            @foreach (var genre in movie.Genres.Take(3))
+                                            {
+                                                <span class="overlay-genre-pill">@genre</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <div class="movie-info">
+                        <h5 class="movie-title" title="@movie.Title">
+                            <a asp-page="./Details" asp-route-id="@movie.Id">@movie.Title</a>
+                        </h5>
+                        <div class="movie-meta">
+                            <span class="movie-year">
+                                <i class="bi bi-calendar-event"></i>
+                                @(movie.ReleaseDate?.Year.ToString() ?? "N/A")
+                            </span>
+
+                            @if (movie.Genres != null && movie.Genres.Length > 0)
+                            {
+                                <span class="movie-genre-preview">
+                                    <i class="bi bi-tag"></i>
+                                    @string.Join(", ", movie.Genres.Take(1))
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Movies.Any())
+    {
+        <div class="empty-results">
+            <div class="empty-icon">
+                <i class="bi bi-film"></i>
+            </div>
+            <h3>Nessun film trovato</h3>
+            <p>Non abbiamo trovato film che corrispondono ai tuoi criteri di ricerca.</p>
+            <a asp-page="./Index" class="btn btn-primary mt-3">
+                <i class="bi bi-arrow-left me-2"></i>Torna a tutti i film
+            </a>
+        </div>
+    }
+
+    <!-- Paginazione -->
+    @if (Model.Movies.TotalPages > 1)
+    {
+        <div class="pagination-container mt-5">
+            <ul class="pagination">
+                <li class="page-item @(!Model.Movies.HasPreviousPage ? "disabled" : "")">
+                    <a class="page-link" asp-page="./Index"
+                       asp-route-pageIndex="@(Model.Movies.PageIndex - 1)"
+                       asp-route-searchString="@Model.SearchQuery"
+                       asp-route-genreFilter="@Model.GenreFilter">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @{
+                    const int maxVisiblePages = 5;
+                    int startPage = Math.Max(1, Model.Movies.PageIndex - maxVisiblePages / 2);
+                    int endPage = Math.Min(Model.Movies.TotalPages, startPage + maxVisiblePages - 1);
+
+                    if (startPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-page="./Index"
+                               asp-route-pageIndex="1"
+                               asp-route-searchString="@Model.SearchQuery"
+                               asp-route-genreFilter="@Model.GenreFilter">1</a>
+                        </li>
+                        if (startPage > 2)
+                        {
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        }
+                    }
+
+                    for (int i = startPage; i <= endPage; i++)
+                    {
+                        <li class="page-item @(i == Model.Movies.PageIndex ? "active" : "")">
+                            <a class="page-link" asp-page="./Index"
+                               asp-route-pageIndex="@i"
+                               asp-route-searchString="@Model.SearchQuery"
+                               asp-route-genreFilter="@Model.GenreFilter">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    if (endPage < Model.Movies.TotalPages)
+                    {
+                        if (endPage < Model.Movies.TotalPages - 1)
+                        {
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        }
+                        <li class="page-item">
+                            <a class="page-link" asp-page="./Index"
+                               asp-route-pageIndex="@Model.Movies.TotalPages"
+                               asp-route-searchString="@Model.SearchQuery"
+                               asp-route-genreFilter="@Model.GenreFilter">@Model.Movies.TotalPages</a>
+                        </li>
+                    }
+                }
+
+                <li class="page-item @(!Model.Movies.HasNextPage ? "disabled" : "")">
+                    <a class="page-link" asp-page="./Index"
+                       asp-route-pageIndex="@(Model.Movies.PageIndex + 1)"
+                       asp-route-searchString="@Model.SearchQuery"
+                       asp-route-genreFilter="@Model.GenreFilter">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    }
+</div>
+
+<!-- Sezione Novità/Consigliati -->
+<div class="container featured-section">
+    <h2 class="section-title">Film consigliati per te</h2>
+    <p class="text-muted section-subtitle">Basati sulle tue preferenze e sui film popolari</p>
+
+    <div class="featured-slider">
+        @foreach (var movie in Model.Movies.Take(6))
+        {
+            <div class="featured-slide">
+                <div class="featured-movie-card">
+                    <a asp-page="./Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                        <div class="featured-movie-image">
+                            @if (!string.IsNullOrEmpty(movie.PosterPath))
+                            {
+                                <img src="@movie.PosterPath" alt="@movie.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="featured-no-poster">
+                                    <i class="bi bi-film"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="featured-movie-info">
+                            <h5>@movie.Title</h5>
+                            <div class="featured-movie-rating">
+                                <div class="rating-stars">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= Math.Round(movie.Rating / 2))
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    }
+                                </div>
+                                <span class="rating-value">@movie.Rating.ToString("0.0")</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Colori del tema */
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #f72585;
+            --text-color: #2b2d42;
+            --light-text: #8d99ae;
+            --background-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --rating-color: #ffc107;
+            --verified-color: #4cc9f0;
+        }
+
+        body {
+            background-color: var(--background-color);
+        }
+
+        /* Hero Section */
+        .movie-hero-section {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('/images/cinema-background.jpg');
+            background-size: cover;
+            background-position: center;
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-title {
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            margin-bottom: 1rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero-subtitle {
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            font-weight: 300;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.3s;
+            animation-fill-mode: both;
+        }
+
+        /* Animated Particles */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            animation: float 15s infinite linear;
+        }
+
+            .particle:nth-child(1) {
+                width: 40px;
+                height: 40px;
+                top: 10%;
+                left: 10%;
+                animation-duration: 20s;
+                animation-delay: 0s;
+                opacity: 0.2;
+            }
+
+            .particle:nth-child(2) {
+                width: 25px;
+                height: 25px;
+                top: 70%;
+                left: 20%;
+                animation-duration: 18s;
+                animation-delay: 1s;
+                opacity: 0.15;
+            }
+
+            .particle:nth-child(3) {
+                width: 35px;
+                height: 35px;
+                top: 40%;
+                left: 80%;
+                animation-duration: 25s;
+                animation-delay: 2s;
+                opacity: 0.1;
+            }
+
+            .particle:nth-child(4) {
+                width: 20px;
+                height: 20px;
+                top: 20%;
+                left: 60%;
+                animation-duration: 22s;
+                animation-delay: 0.5s;
+                opacity: 0.2;
+            }
+
+            .particle:nth-child(5) {
+                width: 30px;
+                height: 30px;
+                top: 80%;
+                left: 50%;
+                animation-duration: 21s;
+                animation-delay: 3s;
+                opacity: 0.15;
+            }
+
+            .particle:nth-child(6) {
+                width: 15px;
+                height: 15px;
+                top: 30%;
+                left: 30%;
+                animation-duration: 19s;
+                animation-delay: 2s;
+                opacity: 0.2;
+            }
+
+            .particle:nth-child(7) {
+                width: 22px;
+                height: 22px;
+                top: 60%;
+                left: 70%;
+                animation-duration: 24s;
+                animation-delay: 1.5s;
+                opacity: 0.1;
+            }
+
+            .particle:nth-child(8) {
+                width: 18px;
+                height: 18px;
+                top: 50%;
+                left: 40%;
+                animation-duration: 23s;
+                animation-delay: 0s;
+                opacity: 0.15;
+            }
+
+            .particle:nth-child(9) {
+                width: 28px;
+                height: 28px;
+                top: 25%;
+                left: 85%;
+                animation-duration: 26s;
+                animation-delay: 2.5s;
+                opacity: 0.2;
+            }
+
+            .particle:nth-child(10) {
+                width: 32px;
+                height: 32px;
+                top: 75%;
+                left: 15%;
+                animation-duration: 27s;
+                animation-delay: 1s;
+                opacity: 0.1;
+            }
+
+        /* Section Title */
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+            .section-title::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                height: 3px;
+                width: 60px;
+                background-color: var(--primary-color);
+                border-radius: 2px;
+            }
+
+        .section-subtitle {
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Categories Section */
+        .popular-categories-container {
+            margin-bottom: 3rem;
+        }
+
+        .category-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .category-chip {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 1.2rem;
+            background-color: white;
+            border-radius: 30px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            color: var(--text-color);
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+
+            .category-chip:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                color: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+
+            .category-chip.active {
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+        .category-icon {
+            margin-right: 0.6rem;
+            font-size: 1.1rem;
+        }
+
+        .category-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Search & Filter */
+        .search-filter-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: fadeInUp 1s ease-out 0.6s;
+            animation-fill-mode: both;
+        }
+
+        .search-input-wrapper, .select-wrapper {
+            position: relative;
+        }
+
+        .search-icon, .select-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 15px;
+            color: var(--light-text);
+            z-index: 2;
+        }
+
+        .search-input {
+            padding-left: 40px;
+            height: 50px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1rem;
+        }
+
+            .search-input::placeholder {
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .search-input:focus {
+                background: rgba(255, 255, 255, 0.3);
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.3);
+                color: white;
+            }
+
+        .genre-select {
+            height: 50px;
+            border-radius: 8px;
+            padding-left: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            appearance: none;
+        }
+
+            .genre-select:focus {
+                background: rgba(255, 255, 255, 0.3);
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.3);
+                color: white;
+            }
+
+        .select-wrapper:after {
+            content: "\F282";
+            font-family: bootstrap-icons;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 15px;
+            color: white;
+            pointer-events: none;
+        }
+
+        .genre-select option {
+            background: white;
+            color: var(--text-color);
+        }
+
+        .search-btn {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+            .search-btn:hover {
+                background-color: var(--secondary-color);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+        /* Filter Status */
+        .filter-status {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-label {
+            color: var(--light-text);
+            margin-right: 0.5rem;
+        }
+
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Movie Container */
+        .movie-listing-container {
+            padding-bottom: 3rem;
+        }
+
+        /* Movie Cards */
+        .movie-item {
+            padding: 0.75rem;
+        }
+
+        .movie-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: var(--card-bg);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+            .movie-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            }
+
+        .movie-poster-container {
+            position: relative;
+            aspect-ratio: 2/3;
+            overflow: hidden;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .movie-poster-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .movie-card:hover .movie-poster-img {
+            transform: scale(1.05);
+        }
+
+        .no-poster {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #e9ecef;
+            color: #adb5bd;
+        }
+
+            .no-poster i {
+                font-size: 3rem;
+                margin-bottom: 0.5rem;
+            }
+
+        /* Rating Badge */
+        .movie-rating-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--rating-color);
+            border-radius: 20px;
+            padding: 0.3rem 0.7rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Verified Badge */
+        .verified-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--verified-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        /* Overlay */
+        .movie-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .movie-card:hover .movie-overlay {
+            opacity: 1;
+        }
+
+        .overlay-content {
+            text-align: center;
+            padding: 1rem;
+            color: white;
+        }
+
+        .view-details-btn {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+            .view-details-btn:hover {
+                background: var(--secondary-color);
+                transform: translateY(-2px);
+            }
+
+        .overlay-genres {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .overlay-genre-pill {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        /* Movie Info */
+        .movie-info {
+            padding: 1.2rem;
+        }
+
+        .movie-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+            .movie-title a {
+                color: var(--text-color);
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+
+                .movie-title a:hover {
+                    color: var(--primary-color);
+                }
+
+        .movie-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--light-text);
+            font-size: 0.85rem;
+        }
+
+        .movie-year, .movie-genre-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Empty Results */
+        .empty-results {
+            text-align: center;
+            padding: 4rem 1rem;
+            max-width: 600px;
+            margin: 2rem auto;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: var(--light-text);
+            margin-bottom: 1rem;
+        }
+
+        .empty-results h3 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-results p {
+            color: var(--light-text);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Featured Section */
+        .featured-section {
+            padding: 3rem 0;
+            background-color: #f0f2f5;
+            margin: 2rem 0;
+            border-radius: 12px;
+        }
+
+        .featured-slider {
+            display: flex;
+            overflow-x: auto;
+            gap: 1.5rem;
+            padding: 1rem 0.5rem;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) #e1e4e8;
+        }
+
+            .featured-slider::-webkit-scrollbar {
+                height: 6px;
+            }
+
+            .featured-slider::-webkit-scrollbar-track {
+                background: #e1e4e8;
+                border-radius: 10px;
+            }
+
+            .featured-slider::-webkit-scrollbar-thumb {
+                background: var(--primary-color);
+                border-radius: 10px;
+            }
+
+        .featured-slide {
+            flex: 0 0 auto;
+            width: 200px;
+        }
+
+        .featured-movie-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+            .featured-movie-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .featured-movie-image {
+            height: 280px;
+            overflow: hidden;
+        }
+
+            .featured-movie-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .featured-no-poster {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e9ecef;
+            color: #adb5bd;
+            font-size: 2rem;
+        }
+
+        .featured-movie-info {
+            padding: 1rem;
+        }
+
+            .featured-movie-info h5 {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+        .featured-movie-rating {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .rating-stars {
+            color: var(--rating-color);
+            font-size: 0.8rem;
+        }
+
+        .rating-value {
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Pagination */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .pagination {
+            display: flex;
+            padding-left: 0;
+            list-style: none;
+            border-radius: 0.375rem;
+        }
+
+        .page-link {
+            position: relative;
+            display: block;
+            padding: 0.7rem 1rem;
+            margin-left: -1px;
+            line-height: 1.25;
+            color: var(--primary-color);
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            font-weight: 500;
+            min-width: 2.5rem;
+            text-align: center;
+        }
+
+            .page-link:hover {
+                z-index: 2;
+                color: var(--secondary-color);
+                background-color: #e9ecef;
+                border-color: #dee2e6;
+            }
+
+            .page-link:focus {
+                z-index: 3;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+            }
+
+        .page-item.active .page-link {
+            z-index: 3;
+            color: #fff;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .page-item.disabled .page-link {
+            color: #6c757d;
+            pointer-events: none;
+            cursor: auto;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
+
+        .page-item:first-child .page-link {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .page-item:last-child .page-link {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Animazione per gli elementi della pagina con data-aos
+            const movieItems = document.querySelectorAll('.movie-item');
+            let delay = 0;
+
+            movieItems.forEach((item, index) => {
+                // Aggiungi un ritardo incrementale per effetto a cascata
+                item.style.opacity = "0";
+                item.style.transform = "translateY(20px)";
+
+                setTimeout(() => {
+                    item.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+                    item.style.opacity = "1";
+                    item.style.transform = "translateY(0)";
+                }, 100 + (index % 10) * 50);
+            });
+
+            // Implementazione slider orizzontale con scorrimento automatico
+            const featuredSlider = document.querySelector('.featured-slider');
+            if (featuredSlider) {
+                let scrollAmount = 0;
+                const slideWidth = 220; // larghezza + gap
+                const maxScroll = featuredSlider.scrollWidth - featuredSlider.clientWidth;
+
+                setInterval(() => {
+                    if (scrollAmount >= maxScroll) {
+                        scrollAmount = 0;
+                        featuredSlider.scrollTo({ left: 0, behavior: 'auto' });
+                    } else {
+                        scrollAmount += slideWidth;
+                        featuredSlider.scrollTo({ left: scrollAmount, behavior: 'smooth' });
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+}

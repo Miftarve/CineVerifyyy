@@ -1,0 +1,226 @@
+﻿@page
+@model CineVerify.Pages.Admin.MoviesModel
+@{
+    ViewData["Title"] = "Gestione Film";
+}
+
+<div class="admin-heading">
+    <h1><i class="bi bi-film me-2"></i>Gestione Film</h1>
+    <div>
+        <a asp-page="./ImportMovie" class="btn btn-outline-primary me-2">
+            <i class="bi bi-cloud-download me-1"></i> Importa Film
+        </a>
+        <a asp-page="./CreateMovie" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Nuovo Film
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    var statusMessageClass = Model.StatusMessage.StartsWith("Errore") ? "danger" : "success";
+    <div class="alert alert-@statusMessageClass alert-dismissible fade show" role="alert">
+        <i class="bi bi-@(statusMessageClass == "danger" ? "exclamation-triangle" : "check-circle") me-2"></i>
+        @Model.StatusMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="bi bi-search me-2"></i>Cerca Film</h4>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-5">
+                        <label for="searchTitle" class="form-label">Titolo</label>
+                        <input type="text" class="form-control" id="searchTitle" name="SearchTitle" value="@Model.SearchTitle" placeholder="Titolo del film...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="verificationStatus" class="form-label">Stato Verifica</label>
+                        <select class="form-select" id="verificationStatus" name="VerificationStatus">
+                            <option value="" selected="@string.IsNullOrEmpty(Model.VerificationStatus)">Tutti</option>
+                            <option value="verified" selected="@(Model.VerificationStatus == "verified")">Verificati</option>
+                            <option value="unverified" selected="@(Model.VerificationStatus == "unverified")">Non Verificati</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="orderBy" class="form-label">Ordina per</label>
+                        <select class="form-select" id="orderBy" name="OrderBy">
+                            <option value="date_desc" selected="@(Model.OrderBy == "date_desc")">Data (recenti)</option>
+                            <option value="date_asc" selected="@(Model.OrderBy == "date_asc")">Data (vecchi)</option>
+                            <option value="title_asc" selected="@(Model.OrderBy == "title_asc")">Titolo (A-Z)</option>
+                            <option value="title_desc" selected="@(Model.OrderBy == "title_desc")">Titolo (Z-A)</option>
+                            <option value="rating_desc" selected="@(Model.OrderBy == "rating_desc")">Valutazione (alta)</option>
+                            <option value="rating_asc" selected="@(Model.OrderBy == "rating_asc")">Valutazione (bassa)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search me-1"></i> Cerca
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0"><i class="bi bi-list-ul me-2"></i>Elenco Film (@Model.TotalMovies)</h4>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 60px">ID</th>
+                        <th style="width: 80px">Poster</th>
+                        <th>Titolo</th>
+                        <th>Data Uscita</th>
+                        <th>Rating</th>
+                        <th>Verificato</th>
+                        <th style="width: 150px">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var movie in Model.Movies)
+                    {
+                        <tr>
+                            <td>@movie.Id</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(movie.PosterPath))
+                                {
+                                    <img src="@movie.PosterPath" alt="@movie.Title" class="img-thumbnail" style="width: 50px" />
+                                }
+                                else
+                                {
+                                    <div class="no-poster-small">
+                                        <i class="bi bi-film"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <strong>@movie.Title</strong>
+                                @if (!string.IsNullOrEmpty(movie.OriginalTitle) && movie.OriginalTitle != movie.Title)
+                                {
+                                    <br />
+
+                                    <small class="text-muted">@movie.OriginalTitle</small>
+                                }
+                            </td>
+                            <td>@(movie.ReleaseDate?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                            <td>
+                                <span class="badge bg-warning text-dark">@movie.Rating</span>
+                                <small class="ms-1">(@movie.VoteCount voti)</small>
+                            </td>
+                            <td>
+                                @if (movie.IsVerified)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Verificato</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i> Non Verificato</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-page="/Movies/Details" asp-route-id="@movie.Id" class="btn btn-sm btn-outline-primary" title="Visualizza">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-page="./EditMovie" asp-route-id="@movie.Id" class="btn btn-sm btn-outline-primary" title="Modifica">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" asp-page-handler="ToggleVerification" class="d-inline">
+                                        <input type="hidden" name="movieId" value="@movie.Id" />
+                                        <button type="submit" class="btn btn-sm @(movie.IsVerified ? "btn-outline-secondary" : "btn-outline-success")"
+                                                title="@(movie.IsVerified ? "Annulla verifica" : "Verifica film")">
+                                            <i class="bi @(movie.IsVerified ? "bi-x-circle" : "bi-check-circle")"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" asp-page-handler="DeleteMovie" class="d-inline"
+                                          onsubmit="return confirm('Sei sicuro di voler eliminare questo film?');">
+                                        <input type="hidden" name="movieId" value="@movie.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Elimina">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Paginazione film">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-page="./Movies" asp-route-p="@(Model.CurrentPage - 1)"
+                           asp-route-SearchTitle="@Model.SearchTitle"
+                           asp-route-VerificationStatus="@Model.VerificationStatus"
+                           asp-route-OrderBy="@Model.OrderBy">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-page="./Movies" asp-route-p="@i"
+                               asp-route-SearchTitle="@Model.SearchTitle"
+                               asp-route-VerificationStatus="@Model.VerificationStatus"
+                               asp-route-OrderBy="@Model.OrderBy">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-page="./Movies" asp-route-p="@(Model.CurrentPage + 1)"
+                           asp-route-SearchTitle="@Model.SearchTitle"
+                           asp-route-VerificationStatus="@Model.VerificationStatus"
+                           asp-route-OrderBy="@Model.OrderBy">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .no-poster-small {
+            width: 50px;
+            height: 70px;
+            background-color: #e9e9e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+            .no-poster-small i {
+                font-size: 1.5rem;
+                color: #aaa;
+            }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Auto-dismiss per gli alert
+        window.setTimeout(function() {
+            $(".alert").fadeTo(500, 0).slideUp(500, function() {
+                $(this).remove();
+            });
+        }, 4000);
+    </script>
+}

@@ -1,0 +1,1953 @@
+﻿@page
+@model CineVerify.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard Amministrativa";
+    var currentDate = DateTime.Now.ToString("dddd, d MMMM yyyy");
+}
+
+<!-- Header della dashboard -->
+<div class="dashboard-header">
+    <div class="header-content">
+        <div class="greeting-section">
+            <h1 class="dashboard-title">
+                <i class="bi bi-speedometer2 title-icon"></i> Dashboard
+            </h1>
+            <p class="welcome-message">
+                Benvenuto, <span class="admin-name">@User.Identity.Name</span>
+                <span class="date-info">@currentDate</span>
+            </p>
+        </div>
+        <div class="action-buttons">
+            <button type="button" class="btn btn-primary btn-with-icon" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="bi bi-cloud-arrow-down"></i>
+                <span>Importa Film</span>
+            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-gear"></i> Azioni rapide
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#updateDataModal"><i class="bi bi-arrow-repeat me-2"></i>Aggiorna dati</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal"><i class="bi bi-sliders me-2"></i>Impostazioni</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#clearCacheModal"><i class="bi bi-trash me-2"></i>Svuota cache</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pannello statistico principale -->
+<div class="dashboard-stats-panel">
+    <div class="stat-card">
+        <div class="stat-icon movies">
+            <i class="bi bi-film"></i>
+        </div>
+        <div class="stat-details">
+            <h2>@Model.TotalMovies</h2>
+            <p>Film nel database</p>
+        </div>
+        <div class="stat-chart">
+            <canvas id="moviesChart" width="60" height="35"></canvas>
+        </div>
+        <div class="stat-footer">
+            @{
+                // Simulo un dato che in realtà verrebbe dal Model
+                var moviesThisWeek = 12;
+            }
+            <span class="trend positive">
+                <i class="bi bi-arrow-up-right"></i> @moviesThisWeek nuovi questa settimana
+            </span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon users">
+            <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-details">
+            <h2>@Model.TotalUsers</h2>
+            <p>Utenti registrati</p>
+        </div>
+        <div class="stat-chart">
+            <canvas id="usersChart" width="60" height="35"></canvas>
+        </div>
+        <div class="stat-footer">
+            @{
+                // Simulo un dato che in realtà verrebbe dal Model
+                var newUsers = 8;
+            }
+            <span class="trend positive">
+                <i class="bi bi-arrow-up-right"></i> @newUsers nuovi questa settimana
+            </span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon reviews">
+            <i class="bi bi-star"></i>
+        </div>
+        <div class="stat-details">
+            <h2>@Model.TotalReviews</h2>
+            <p>Recensioni totali</p>
+        </div>
+        <div class="stat-chart">
+            <canvas id="reviewsChart" width="60" height="35"></canvas>
+        </div>
+        <div class="stat-footer">
+            @{
+                // Simulo un dato che in realtà verrebbe dal Model
+                var reviewsThisWeek = 28;
+            }
+            <span class="trend positive">
+                <i class="bi bi-arrow-up-right"></i> @reviewsThisWeek nuove questa settimana
+            </span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon genres">
+            <i class="bi bi-tags"></i>
+        </div>
+        <div class="stat-details">
+            <h2>@Model.TotalGenres</h2>
+            <p>Generi disponibili</p>
+        </div>
+        <div class="stat-chart">
+            <div class="genre-distribution">
+                <div class="genre-bar" style="height: 80%;" title="Azione"></div>
+                <div class="genre-bar" style="height: 65%;" title="Commedia"></div>
+                <div class="genre-bar" style="height: 50%;" title="Drammatico"></div>
+                <div class="genre-bar" style="height: 40%;" title="Fantascienza"></div>
+                <div class="genre-bar" style="height: 60%;" title="Horror"></div>
+            </div>
+        </div>
+        <div class="stat-footer">
+            <a href="#genreDistribution" class="view-details">
+                <i class="bi bi-pie-chart"></i> Vedi distribuzione
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Grafico principale -->
+    <div class="dashboard-card full-width">
+        <div class="card-header">
+            <h3><i class="bi bi-graph-up me-2"></i>Panoramica Attività</h3>
+            <div class="card-actions">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary active period-selector" data-period="week">Settimana</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary period-selector" data-period="month">Mese</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary period-selector" data-period="year">Anno</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="activityChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gestione Film e Operazioni Film -->
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h3><i class="bi bi-film me-2"></i>Gestione Film</h3>
+            <div class="card-actions">
+                <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="bi bi-cloud-arrow-down me-1"></i> Importa
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="status-section">
+                <div class="status-item">
+                    @{
+                        var verifiedMovies = Model.TotalMovies * 0.8;
+                        var verifiedPercentage = Model.TotalMovies > 0 ? (verifiedMovies / Model.TotalMovies * 100) : 0;
+                    }
+                    <div class="status-info">
+                        <h4>Film verificati</h4>
+                        <p>@verifiedMovies.ToString("0") / @Model.TotalMovies</p>
+                    </div>
+                    <div class="status-progress">
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: @verifiedPercentage%"></div>
+                        </div>
+                        <span>@verifiedPercentage.ToString("0.0")%</span>
+                    </div>
+                </div>
+                
+                <div class="status-item">
+                    @{
+                        var moviesWithTrailers = Model.TotalMovies * 0.6;
+                        var trailerPercentage = Model.TotalMovies > 0 ? (moviesWithTrailers / Model.TotalMovies * 100) : 0;
+                    }
+                    <div class="status-info">
+                        <h4>Con trailer</h4>
+                        <p>@moviesWithTrailers.ToString("0") / @Model.TotalMovies</p>
+                    </div>
+                    <div class="status-progress">
+                        <div class="progress">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: @trailerPercentage%"></div>
+                        </div>
+                        <span>@trailerPercentage.ToString("0.0")%</span>
+                    </div>
+                </div>
+                
+                <div class="status-item">
+                    @{
+                        var moviesWithoutPlot = Model.TotalMovies * 0.15;
+                        var withoutPlotPercentage = Model.TotalMovies > 0 ? (moviesWithoutPlot / Model.TotalMovies * 100) : 0;
+                    }
+                    <div class="status-info">
+                        <h4>Senza trama</h4>
+                        <p>@moviesWithoutPlot.ToString("0") / @Model.TotalMovies</p>
+                    </div>
+                    <div class="status-progress">
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: @withoutPlotPercentage%"></div>
+                        </div>
+                        <span>@withoutPlotPercentage.ToString("0.0")%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons-group">
+                <a asp-page="/Movies/Index" class="btn btn-primary btn-block">
+                    <i class="bi bi-list me-2"></i>Gestisci Film
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gestione Utenti -->
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h3><i class="bi bi-people me-2"></i>Gestione Utenti</h3>
+            <div class="card-actions">
+                <a href="#" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="bi bi-person-plus me-1"></i> Nuovo
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="user-distribution">
+                <canvas id="userRolesChart" height="180"></canvas>
+            </div>
+            
+            <div class="user-counts mt-3">
+                <div class="count-item">
+                    @{
+                        // Simulo dati che in realtà verrebbero dal Model
+                        var adminCount = 3;
+                    }
+                    <div class="count-icon admin">
+                        <i class="bi bi-shield"></i>
+                    </div>
+                    <div class="count-info">
+                        <span class="count-value">@adminCount</span>
+                        <span class="count-label">Admin</span>
+                    </div>
+                </div>
+                
+                <div class="count-item">
+                    @{
+                        var criticCount = 12;
+                    }
+                    <div class="count-icon critic">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <div class="count-info">
+                        <span class="count-value">@criticCount</span>
+                        <span class="count-label">Critici</span>
+                    </div>
+                </div>
+                
+                <div class="count-item">
+                    @{
+                        var regularUserCount = Model.TotalUsers - adminCount - criticCount;
+                    }
+                    <div class="count-icon user">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="count-info">
+                        <span class="count-value">@regularUserCount</span>
+                        <span class="count-label">Utenti</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons-group">
+                <a asp-page="/Admin/Users" class="btn btn-success btn-block">
+                    <i class="bi bi-people me-2"></i>Gestisci Utenti
+                </a>
+                <a asp-page="/Admin/Roles" class="btn btn-outline-success btn-block">
+                    <i class="bi bi-shield me-2"></i>Gestisci Ruoli
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recensioni Recenti -->
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h3><i class="bi bi-chat-quote me-2"></i>Recensioni Recenti</h3>
+            <div class="card-actions">
+                <a href="#" class="btn btn-sm btn-outline-secondary refresh-data" data-target="reviews">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Aggiorna
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="recent-reviews">
+                <!-- Simuliamo alcune recensioni recenti -->
+                <div class="review-item">
+                    <div class="review-header">
+                        <div class="reviewer-info">
+                            <div class="avatar">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <div class="reviewer-details">
+                                <h4>Marco Rossi</h4>
+                                <div class="review-meta">
+                                    <div class="rating">
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-half"></i>
+                                    </div>
+                                    <span class="time">2 ore fa</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="movie-title" title="Dune: Parte Due">
+                            Dune: Parte Due
+                        </div>
+                    </div>
+                    <div class="review-content">
+                        "Un capolavoro visivo che espande l'universo del primo film con una narrazione ancora più ricca e personaggi più profondi..."
+                    </div>
+                </div>
+                
+                <div class="review-item">
+                    <div class="review-header">
+                        <div class="reviewer-info">
+                            <div class="avatar">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <div class="reviewer-details">
+                                <h4>Anna Verdi</h4>
+                                <div class="review-meta">
+                                    <div class="rating">
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star"></i>
+                                        <i class="bi bi-star"></i>
+                                        <i class="bi bi-star"></i>
+                                    </div>
+                                    <span class="time">5 ore fa</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="movie-title" title="Il Gladiatore II">
+                            Il Gladiatore II
+                        </div>
+                    </div>
+                    <div class="review-content">
+                        "Deludente rispetto all'originale. La trama è prevedibile e i personaggi nuovi non convincono..."
+                    </div>
+                </div>
+                
+                <div class="review-item">
+                    <div class="review-header">
+                        <div class="reviewer-info">
+                            <div class="avatar">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <div class="reviewer-details">
+                                <h4>Luca Bianchi</h4>
+                                <div class="review-meta">
+                                    <div class="rating">
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star"></i>
+                                    </div>
+                                    <span class="time">12 ore fa</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="movie-title" title="Deadpool & Wolverine">
+                            Deadpool & Wolverine
+                        </div>
+                    </div>
+                    <div class="review-content">
+                        "Una combinazione perfetta di azione, umorismo e fan service. Reynolds e Jackman hanno una chimica incredibile..."
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons-group">
+                <a asp-page="/Admin/Reviews" class="btn btn-info btn-block">
+                    <i class="bi bi-list-ul me-2"></i>Tutte le recensioni
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Operazioni avanzate -->
+    <div class="dashboard-card">
+        <div class="card-header">
+            <h3><i class="bi bi-gear me-2"></i>Operazioni Avanzate</h3>
+        </div>
+        <div class="card-body">
+            <div class="system-status">
+                <div class="status-group">
+                    <h4><i class="bi bi-hdd me-2"></i>Stato Sistema</h4>
+                    <div class="status-items">
+                        <div class="system-status-item">
+                            <div class="status-label">Cache</div>
+                            <div class="status-value healthy">
+                                <i class="bi bi-check-circle"></i> Ottimale
+                            </div>
+                        </div>
+                        
+                        <div class="system-status-item">
+                            <div class="status-label">Database</div>
+                            <div class="status-value healthy">
+                                <i class="bi bi-check-circle"></i> Connesso
+                            </div>
+                        </div>
+                        
+                        <div class="system-status-item">
+                            <div class="status-label">API TMDB</div>
+                            <div class="status-value healthy">
+                                <i class="bi bi-check-circle"></i> Attivo
+                            </div>
+                        </div>
+                        
+                        <div class="system-status-item">
+                            <div class="status-label">API Gemini</div>
+                            <div class="status-value warning">
+                                <i class="bi bi-exclamation-triangle"></i> Limitato
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="maintenance-actions">
+                    <h4><i class="bi bi-tools me-2"></i>Manutenzione</h4>
+                    <div class="action-grid">
+                        <button class="action-button" data-bs-toggle="modal" data-bs-target="#clearCacheModal">
+                            <i class="bi bi-trash"></i>
+                            <span>Svuota Cache</span>
+                        </button>
+                        
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ultimi aggiornamenti -->
+<div class="dashboard-updates">
+    <div class="updates-header">
+        <h3><i class="bi bi-clock-history me-2"></i>Attività Recenti</h3>
+        <a href="#" class="view-all">Visualizza tutto <i class="bi bi-arrow-right"></i></a>
+    </div>
+    
+    <div class="updates-timeline">
+        <div class="timeline-item">
+            <div class="timeline-icon">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-time">Oggi, 15:32</div>
+                <div class="timeline-title">Nuovo utente registrato</div>
+                <div class="timeline-details">L'utente <strong>filippo.rossi@example.com</strong> si è registrato alla piattaforma</div>
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-icon movie-icon">
+                <i class="bi bi-film"></i>
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-time">Oggi, 14:15</div>
+                <div class="timeline-title">Film aggiunto</div>
+                <div class="timeline-details">Aggiunto il film <strong>Inside Out 2</strong> al database</div>
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-icon review-icon">
+                <i class="bi bi-star"></i>
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-time">Oggi, 11:45</div>
+                <div class="timeline-title">Nuova recensione</div>
+                <div class="timeline-details"><strong>Marco Bianchi</strong> ha recensito <strong>Joker: Folie à Deux</strong></div>
+            </div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-icon system-icon">
+                <i class="bi bi-gear"></i>
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-time">Ieri, 18:20</div>
+                <div class="timeline-title">Manutenzione sistema</div>
+                <div class="timeline-details">Eseguito svuotamento cache e ottimizzazione database</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Svuota Cache -->
+<div class="modal fade" id="clearCacheModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Svuota Cache</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <h4>Conferma svuotamento cache</h4>
+                <p>Sei sicuro di voler svuotare la cache del sistema? Questa operazione potrebbe rallentare temporaneamente l'applicazione mentre la cache viene rigenerata.</p>
+                
+                <div class="cache-details">
+                    <div class="cache-item">
+                        <div class="cache-label">Cache immagini</div>
+                        <div class="cache-value">124 MB</div>
+                    </div>
+                    <div class="cache-item">
+                        <div class="cache-label">Cache API</div>
+                        <div class="cache-value">38 MB</div>
+                    </div>
+                    <div class="cache-item">
+                        <div class="cache-label">Cache applicazione</div>
+                        <div class="cache-value">56 MB</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <form method="post" asp-page-handler="ClearCache">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Svuota Cache
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Importazione Film -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cloud-arrow-down me-2"></i>Importa Film</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="import-options">
+                    <div class="import-option">
+                        <input type="radio" name="importType" id="importPopular" value="popular" checked>
+                        <label for="importPopular">
+                            <div class="option-icon">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div class="option-info">
+                                <h4>Film Popolari</h4>
+                                <p>Importa i film più popolari da TMDB</p>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="import-option">
+                        <input type="radio" name="importType" id="importNew" value="new">
+                        <label for="importNew">
+                            <div class="option-icon">
+                                <i class="bi bi-calendar-plus"></i>
+                            </div>
+                            <div class="option-info">
+                                <h4>Nuove Uscite</h4>
+                                <p>Importa i film appena usciti</p>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="import-option">
+                        <input type="radio" name="importType" id="importCustom" value="custom">
+                        <label for="importCustom">
+                            <div class="option-icon">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <div class="option-info">
+                                <h4>Ricerca Specifica</h4>
+                                <p>Cerca e importa film specifici</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="import-settings">
+                    <h4>Impostazioni importazione</h4>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="downloadPostersSwitch" checked>
+                        <label class="form-check-label" for="downloadPostersSwitch">Scarica le locandine</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="downloadBackdropsSwitch">
+                        <label class="form-check-label" for="downloadBackdropsSwitch">Scarica le immagini di sfondo</label>
+                    </div>
+                </div>
+                
+                <div id="customSearchContainer" class="custom-search mt-3" style="display: none;">
+                    <div class="mb-3">
+                        <label for="customSearchQuery" class="form-label">Cerca film</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="customSearchQuery" placeholder="Es. Dune, Matrix, ecc.">
+                            <button class="btn btn-primary" type="button">Cerca</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <a asp-page="/Admin/ImportMovies" class="btn btn-primary">
+                    <i class="bi bi-arrow-right me-2"></i>Continua
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inizializza i grafici
+            initializeCharts();
+            
+            // Toggle per la visualizzazione custom search
+            const importTypeRadios = document.querySelectorAll('input[name="importType"]');
+            const customSearchContainer = document.getElementById('customSearchContainer');
+            
+            importTypeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'custom') {
+                        customSearchContainer.style.display = 'block';
+                    } else {
+                        customSearchContainer.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Animazione per far apparire le sezioni
+            const sections = document.querySelectorAll('.dashboard-card, .dashboard-stats-panel, .dashboard-updates');
+            sections.forEach((section, index) => {
+                setTimeout(() => {
+                    section.classList.add('appear');
+                }, 100 * index);
+            });
+            
+            // Gestione dei selettori di periodo
+            const periodSelectors = document.querySelectorAll('.period-selector');
+            periodSelectors.forEach(button => {
+                button.addEventListener('click', function() {
+                    periodSelectors.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Qui potremmo aggiornare il grafico in base al periodo selezionato
+                    const period = this.getAttribute('data-period');
+                    updateActivityChart(period);
+                });
+            });
+            
+            // Pulsanti di refresh dati
+            const refreshButtons = document.querySelectorAll('.refresh-data');
+            refreshButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('data-target');
+                    
+                    // Aggiungi classe di rotazione all'icona
+                    const icon = this.querySelector('i');
+                    icon.classList.add('rotating');
+                    
+                    // Simuliamo il refresh dopo un po'
+                    setTimeout(() => {
+                        icon.classList.remove('rotating');
+                        
+                        // Mostra notifica di successo
+                        showNotification(`Dati ${target} aggiornati con successo`, 'success');
+                    }, 1000);
+                });
+            });
+        });
+        
+        function initializeCharts() {
+            // Grafico attività
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            const activityChart = new Chart(activityCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'],
+                    datasets: [
+                        {
+                            label: 'Nuovi utenti',
+                            data: [3, 2, 4, 1, 5, 3, 2],
+                            borderColor: '#4361ee',
+                            backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Recensioni',
+                            data: [5, 7, 4, 9, 6, 12, 8],
+                            borderColor: '#f72585',
+                            backgroundColor: 'rgba(247, 37, 133, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Film aggiunti',
+                            data: [2, 5, 3, 4, 6, 1, 3],
+                            borderColor: '#4cc9f0',
+                            backgroundColor: 'rgba(76, 201, 240, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Mini chart per film
+            const moviesCtx = document.getElementById('moviesChart').getContext('2d');
+            new Chart(moviesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', '', '', '', '', '', '', '', ''],
+                    datasets: [{
+                        data: [5, 7, 10, 8, 12, 15, 14, 16, 18, 19, 22, 24],
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: { display: false }
+                    },
+                    elements: {
+                        line: { borderWidth: 1.5 }
+                    }
+                }
+            });
+            
+            // Mini chart per utenti
+            const usersCtx = document.getElementById('usersChart').getContext('2d');
+            new Chart(usersCtx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', '', '', '', '', '', '', '', ''],
+                    datasets: [{
+                        data: [8, 10, 12, 15, 16, 18, 20, 24, 28, 30, 32, 35],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: { display: false }
+                    },
+                    elements: {
+                        line: { borderWidth: 1.5 }
+                    }
+                }
+            });
+            
+            // Mini chart per recensioni
+            const reviewsCtx = document.getElementById('reviewsChart').getContext('2d');
+            new Chart(reviewsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['', '', '', '', '', '', '', '', '', '', '', ''],
+                    datasets: [{
+                        data: [15, 18, 25, 30, 35, 40, 45, 52, 60, 65, 70, 78],
+                        borderColor: '#f72585',
+                        backgroundColor: 'rgba(247, 37, 133, 0.2)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: { display: false }
+                    },
+                    elements: {
+                        line: { borderWidth: 1.5 }
+                    }
+                }
+            });
+            
+            // Grafico ruoli utente
+            const userRolesCtx = document.getElementById('userRolesChart').getContext('2d');
+            new Chart(userRolesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Utenti', 'Critici', 'Admin'],
+                    datasets: [{
+                        data: [65, 15, 5],
+                        backgroundColor: [
+                            'rgba(52, 152, 219, 0.8)',
+                            'rgba(243, 156, 18, 0.8)',
+                            'rgba(231, 76, 60, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+        
+        function updateActivityChart(period) {
+            // Qui potremmo aggiornare il grafico con dati diversi in base al periodo
+            console.log(`Updating chart for period: ${period}`);
+            // In un'implementazione reale, qui faresti una chiamata AJAX per ottenere nuovi dati
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Crea un elemento toast per la notifica
+            const toast = document.createElement('div');
+            toast.className = `dashboard-toast toast-${type}`;
+            
+            // Imposta l'icona appropriata
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'warning') icon = 'exclamation-triangle';
+            if (type === 'error') icon = 'exclamation-circle';
+            
+            // Contenuto del toast
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="bi bi-${icon}"></i>
+                </div>
+                <div class="toast-content">${message}</div>
+                <button class="toast-close">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            
+            // Aggiungi alla pagina
+            const toastContainer = document.querySelector('.toast-container') || 
+                (() => {
+                    const container = document.createElement('div');
+                    container.className = 'toast-container';
+                    document.body.appendChild(container);
+                    return container;
+                })();
+            
+            toastContainer.appendChild(toast);
+            
+            // Anima l'entrata
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Gestione chiusura
+            const closeBtn = toast.querySelector('.toast-close');
+            closeBtn.addEventListener('click', () => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            });
+            
+            // Auto chiusura
+            setTimeout(() => {
+                if (toast.isConnected) { // Controlla se è ancora nel DOM
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (toast.isConnected) toast.remove();
+                    }, 300);
+                }
+            }, 5000);
+        }
+    </script>
+}
+
+@section Styles {
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4cc9f0;
+            --primary-dark: #3a0ca3;
+            --secondary: #7209b7;
+            --danger: #f72585;
+            --warning: #ff9e00;
+            --success: #38b000;
+            --info: #3a86ff;
+            --dark: #171717;
+            --light: #f8f9fa;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            
+            --border-radius: 10px;
+            --border-radius-sm: 6px;
+            --border-radius-lg: 16px;
+            
+            --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.04);
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+            
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        /* ===== DASHBOARD LAYOUT ===== */
+        .dashboard-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .greeting-section {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .dashboard-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--gray-800);
+        }
+        
+        .title-icon {
+            color: var(--primary);
+        }
+        
+        .welcome-message {
+            color: var(--gray-600);
+            margin: 0.5rem 0 0 0;
+        }
+        
+        .admin-name {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        .date-info {
+            margin-left: 0.75rem;
+            padding-left: 0.75rem;
+            border-left: 1px solid var(--gray-300);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn-with-icon {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* ===== STATS PANEL ===== */
+        .dashboard-stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .dashboard-stats-panel.appear {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        
+        .stat-icon.movies {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .stat-icon.users {
+            background-color: rgba(56, 176, 0, 0.1);
+            color: var(--success);
+        }
+        
+        .stat-icon.reviews {
+            background-color: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+        }
+        
+        .stat-icon.genres {
+            background-color: rgba(255, 158, 0, 0.1);
+            color: var(--warning);
+        }
+        
+        .stat-details {
+            flex: 1;
+            min-width: 100px;
+        }
+        
+        .stat-details h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+            line-height: 1;
+        }
+        
+        .stat-details p {
+            color: var(--gray-600);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
+        .stat-chart {
+            flex: 1 0 100%;
+            height: 35px;
+            margin-top: 1.25rem;
+        }
+        
+        .stat-footer {
+            width: 100%;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+        
+        .trend {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-weight: 500;
+        }
+        
+        .trend.positive {
+            color: var(--success);
+        }
+        
+        .trend.negative {
+            color: var(--danger);
+        }
+        
+        .genre-distribution {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+        }
+        
+        .genre-bar {
+            width: 6px;
+            background: var(--warning);
+            border-radius: 3px;
+            transition: height 0.3s ease;
+        }
+        
+        .genre-bar:nth-child(odd) {
+            background: var(--primary);
+        }
+        
+        .view-details {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .view-details:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        /* ===== DASHBOARD GRID ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .dashboard-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .dashboard-card.appear {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .card-header {
+            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .card-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .card-body {
+            padding: 1.25rem;
+            flex: 1;
+        }
+        
+        /* ===== CHARTS ===== */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+        
+        /* ===== STATUS SECTION ===== */
+        .status-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .status-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-info h4 {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+        
+        .status-info p {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        .status-progress {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .status-progress .progress {
+            flex: 1;
+            height: 8px;
+            background-color: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .status-progress .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .status-progress span {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            min-width: 50px;
+            text-align: right;
+        }
+        
+        /* ===== ACTION BUTTONS ===== */
+        .action-buttons-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+        }
+        
+        .btn-block {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            transition: var(--transition);
+        }
+        
+        /* ===== USER DISTRIBUTION ===== */
+        .user-counts {
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+        }
+        
+        .count-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .count-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .count-icon.admin {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+        
+        .count-icon.critic {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+        }
+        
+        .count-icon.user {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+        
+        .count-info {
+            text-align: center;
+        }
+        
+        .count-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            display: block;
+        }
+        
+        .count-label {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+        
+        /* ===== REVIEWS SECTION ===== */
+        .recent-reviews {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        
+        .review-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .review-item:last-child {
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .reviewer-info {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .reviewer-details h4 {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        
+        .review-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 0.25rem;
+        }
+        
+        .rating {
+            color: var(--warning);
+            font-size: 0.8rem;
+        }
+        
+        .time {
+            color: var(--gray-600);
+            font-size: 0.8rem;
+        }
+        
+        .movie-title {
+            background-color: var(--gray-100);
+            color: var(--gray-700);
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .review-content {
+            color: var(--gray-700);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        /* ===== SYSTEM STATUS ===== */
+        .system-status {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .status-group h4 {
+            margin: 0 0 0.75rem 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .system-status-item {
+            display: flex;
+            flex-direction: column;
+            padding: 0.75rem 1rem;
+            background-color: var(--gray-100);
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .status-label {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            margin-bottom: 0.35rem;
+        }
+        
+        .status-value {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-value.healthy {
+            color: var(--success);
+        }
+        
+        .status-value.warning {
+            color: var(--warning);
+        }
+        
+        .status-value.danger {
+            color: var(--danger);
+        }
+        
+        /* ===== MAINTENANCE ACTIONS ===== */
+        .maintenance-actions {
+            margin-top: 0.5rem;
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .action-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background-color: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .action-button:hover {
+            background-color: var(--gray-100);
+            border-color: var(--gray-300);
+            transform: translateY(-3px);
+        }
+        
+        .action-button i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .action-button span {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+        
+        /* ===== DASHBOARD UPDATES ===== */
+        .dashboard-updates {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            opacity: a0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .dashboard-updates.appear {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .updates-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .updates-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .view-all {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+            .view-all:hover {
+                color: var(--primary-dark);
+                text-decoration: underline;
+            }
+
+        /* ===== TIMELINE ===== */
+        .updates-timeline {
+            padding: 1.5rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1.25rem;
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+            .timeline-item:last-child {
+                padding-bottom: 0;
+            }
+
+            .timeline-item:not(:last-child)::after {
+                content: '';
+                position: absolute;
+                top: 45px;
+                left: 20px;
+                bottom: 0;
+                width: 2px;
+                background-color: var(--gray-200);
+            }
+
+        .timeline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+            .timeline-icon.movie-icon {
+                background-color: rgba(247, 37, 133, 0.1);
+                color: var(--danger);
+            }
+
+            .timeline-icon.review-icon {
+                background-color: rgba(255, 158, 0, 0.1);
+                color: var(--warning);
+            }
+
+            .timeline-icon.system-icon {
+                background-color: rgba(76, 201, 240, 0.1);
+                color: var(--info);
+            }
+
+        .timeline-content {
+            flex: 1;
+            padding-top: 0.25rem;
+        }
+
+        .timeline-time {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-bottom: 0.35rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            color: var(--gray-800);
+        }
+
+        .timeline-details {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        /* ===== MODALS ===== */
+        .modal-content {
+            border: none;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.25rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .modal-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+            .modal-icon.warning {
+                background-color: rgba(255, 158, 0, 0.1);
+                color: var(--warning);
+            }
+
+        .modal .cache-details {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: var(--gray-100);
+            border-radius: var(--border-radius-sm);
+        }
+
+        .modal .cache-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+            .modal .cache-item:not(:last-child) {
+                border-bottom: 1px solid var(--gray-200);
+            }
+
+        .modal .cache-label {
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .modal .cache-value {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        /* ===== IMPORT OPTIONS ===== */
+        .import-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .import-option {
+            position: relative;
+        }
+
+            .import-option input[type="radio"] {
+                position: absolute;
+                opacity: 0;
+            }
+
+            .import-option label {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                padding: 1rem;
+                border: 1px solid var(--gray-300);
+                border-radius: var(--border-radius-sm);
+                cursor: pointer;
+                transition: var(--transition);
+            }
+
+            .import-option input[type="radio"]:checked + label {
+                border-color: var(--primary);
+                background-color: rgba(67, 97, 238, 0.05);
+            }
+
+        .option-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .option-info h4 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .option-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .import-settings {
+            border-top: 1px solid var(--gray-200);
+            padding-top: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+            .import-settings h4 {
+                margin: 0 0 1rem 0;
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--gray-800);
+            }
+
+        .form-switch {
+            margin-bottom: 0.75rem;
+        }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .dashboard-toast {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: white;
+            border-radius: var(--border-radius-sm);
+            padding: 1rem;
+            box-shadow: var(--shadow-lg);
+            max-width: 350px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+            .dashboard-toast.show {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+        .toast-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .toast-success .toast-icon {
+            background-color: rgba(56, 176, 0, 0.1);
+            color: var(--success);
+        }
+
+        .toast-info .toast-icon {
+            background-color: rgba(58, 134, 255, 0.1);
+            color: var(--info);
+        }
+
+        .toast-warning .toast-icon {
+            background-color: rgba(255, 158, 0, 0.1);
+            color: var(--warning);
+        }
+
+        .toast-error .toast-icon {
+            background-color: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+        }
+
+        .toast-content {
+            flex: 1;
+            font-size: 0.95rem;
+            color: var(--gray-800);
+        }
+
+        .toast-close {
+            width: 24px;
+            height: 24px;
+            background: none;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0;
+            font-size: 1.25rem;
+        }
+
+            .toast-close:hover {
+                background-color: var(--gray-100);
+                color: var(--gray-800);
+            }
+
+    </style>
+}

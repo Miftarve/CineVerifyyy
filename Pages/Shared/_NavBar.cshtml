@@ -1,0 +1,106 @@
+﻿<nav class="navbar navbar-expand-lg navbar-dark" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand" asp-area="" asp-page="/Index">
+            <div class="brand-logo">
+                <i class="bi bi-film"></i>
+                <span>CineVerify</span>
+            </div>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link @(Context.Request.Path == "/" ? "active" : "")" aria-current="page" asp-page="/Index">
+                        <i class="bi bi-house-door"></i>
+                        <span>Home</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Movies") ? "active" : "")" asp-page="/Movies/Index">
+                        <i class="bi bi-film"></i>
+                        <span>Film</span>
+                    </a>
+                </li>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Favorites") ? "active" : "")" asp-page="/Favorites/Index">
+                            <i class="bi bi-heart"></i>
+                            <span>Preferiti</span>
+                        </a>
+                    </li>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-shield-lock"></i>
+                                <span>Amministrazione</span>
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                <li><a class="dropdown-item" asp-page="/Admin/Dashboard">Dashboard</a></li>
+                                <li><a class="dropdown-item" asp-page="/Admin/Movies">Gestione Film</a></li>
+                                <li><a class="dropdown-item" asp-page="/Admin/Users">Utenti</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-page="/Admin/Settings">Impostazioni</a></li>
+                            </ul>
+                        </li>
+                    }
+                }
+            </ul>
+
+            <div class="d-flex align-items-center">
+                <form class="search-form me-3" action="/Movies/Search" method="get">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="q" placeholder="Cerca film..." aria-label="Search">
+                        <button class="btn search-btn" type="submit"><i class="bi bi-search"></i></button>
+                    </div>
+                </form>
+
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <div class="dropdown user-menu">
+                        <a class="dropdown-toggle" href="#" role="button" id="userDropdown"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <span class="d-none d-lg-block">@User.Identity.Name.Split('@')[0]</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <a class="dropdown-item" asp-page="/Account/Profile">
+                                    <i class="bi bi-person"></i> Profilo
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-page="/Account/Settings">
+                                    <i class="bi bi-gear"></i> Impostazioni
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-page="/Account/Logout" asp-route-returnUrl="/" method="post">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="bi bi-box-arrow-right"></i> Esci
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <div class="auth-buttons">
+                        <a asp-page="/Login" class="btn btn-outline-light me-2">Accedi</a>
+                        <a asp-page="/Register" class="btn btn-primary">Registrati</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</nav>

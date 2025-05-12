@@ -1,0 +1,155 @@
+﻿/* Stili per il trailer bloccato per utenti non autenticati */
+.btn-trailer-locked {
+    background-color: #555 !important;
+    border-color: #444 !important;
+    cursor: pointer;
+    opacity: 0.85;
+    box-shadow: none !important;
+    text-decoration: none !important;
+    color: white !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .btn-trailer-locked:hover {
+        background-color: #444 !important;
+        text-decoration: none !important;
+        color: white !important;
+    }
+
+.locked-trailer-icon {
+    width: 80px;
+    height: 80px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+    .locked-trailer-icon i {
+        color: white;
+        font-size: 32px;
+    }
+
+.btn-login-trailer {
+    padding: 8px 24px;
+    background-color: #e50914;
+    color: white;
+    border-radius: 30px;
+    font-weight: 600;
+    border: none;
+    margin-top: 16px;
+    display: inline-block;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+    .btn-login-trailer:hover {
+        background-color: #f40612;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        text-decoration: none;
+        color: white;
+    }
+
+/* Modifiche al badge del trailer quando è bloccato */
+.trailer-badge.locked {
+    background: #555;
+    background: linear-gradient(135deg, #555 0%, #333 100%);
+}
+
+/* Stili per il link del trailer nella scheda dettagli */
+.trailer-link {
+    color: #e50914;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+    .trailer-link:hover {
+        color: #f40612;
+        text-decoration: none;
+        transform: translateX(3px);
+    }
+
+    .trailer-link.locked {
+        color: #888;
+        cursor: pointer;
+        transform: none;
+    }
+
+        .trailer-link.locked:hover {
+            color: #999;
+            text-decoration: none;
+        }
+
+/* Stili per il loader del trailer */
+.trailer-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0d0d0d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    color: white;
+    font-weight: 500;
+    transition: opacity 0.3s ease;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e50914 0%, #b2070f 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+    .spinner i {
+        font-size: 2rem;
+        color: white;
+    }
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Stili per il feedback di copia del link */
+.copy-feedback {
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

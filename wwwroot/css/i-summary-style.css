@@ -1,0 +1,221 @@
+﻿/* Stili per il riassunto AI */
+.ai-summary-section {
+    position: relative;
+    background: linear-gradient(135deg, #0c0032 0%, #190061 100%);
+    color: #fff;
+    padding: 2rem 0;
+    width: 100%;
+    margin: 2rem 0 0 0;
+    transition: all 0.5s ease;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.ai-summary-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.ai-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 1rem;
+}
+
+.ai-summary-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+    .ai-summary-title i {
+        font-size: 1.8rem;
+        color: #8a2be2;
+        background: rgba(255, 255, 255, 0.2);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ai-summary-title h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+.btn-close-summary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .btn-close-summary:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+.ai-summary-content {
+    min-height: 150px;
+    position: relative;
+}
+
+.ai-summary-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.ai-spinner {
+    margin-bottom: 1rem;
+}
+
+    .ai-spinner > div {
+        width: 12px;
+        height: 12px;
+        background-color: #8a2be2;
+        border-radius: 100%;
+        display: inline-block;
+        animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+        margin: 0 4px;
+    }
+
+    .ai-spinner .bounce1 {
+        animation-delay: -0.32s;
+    }
+
+    .ai-spinner .bounce2 {
+        animation-delay: -0.16s;
+    }
+
+@keyframes sk-bouncedelay {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1.0);
+    }
+}
+
+.ai-summary-text {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.9);
+    display: none;
+}
+
+.ai-summary-footer {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding-top: 1.5rem;
+}
+
+.ai-brand {
+    color: #8a2be2;
+    font-weight: 600;
+}
+
+.ai-summary-slide-in {
+    animation: slideInFromTop 0.5s ease forwards;
+}
+
+.ai-summary-fade-in {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+@keyframes slideInFromTop {
+    0% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.btn-summary {
+    background-color: #8a2be2 !important;
+    border-color: #8a2be2 !important;
+}
+
+    .btn-summary:hover {
+        background-color: #7928a1 !important;
+        border-color: #7928a1 !important;
+    }
+
+.btn-generate-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    padding: 8px 16px;
+    background: #f0f0f0;
+    color: #555;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .btn-generate-summary:hover {
+        background: #e6e6e6;
+        color: #333;
+    }
+
+    .btn-generate-summary i {
+        font-size: 1rem;
+        color: #8a2be2;
+    }
+
+.ai-error {
+    color: #ff6b6b;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 10px;
+}
+
+    .ai-error i {
+        font-size: 1.5rem;
+    }

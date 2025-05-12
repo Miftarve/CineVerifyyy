@@ -1,0 +1,40 @@
+﻿.detailed-summary {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+    text-align: justify;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.pdf-controls {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    text-align: center;
+}
+
+#pdfGenerationStatus {
+    margin-left: 1rem;
+    font-style: italic;
+}
+
+#previousAnalysesSection {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    display: none;
+}
+
+    #previousAnalysesSection h4 {
+        margin-bottom: 15px;
+        color: white;
+    }
+
+.list-group-item {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    margin-bottom: 5px;
+    border-radius: 5px !important;
+}

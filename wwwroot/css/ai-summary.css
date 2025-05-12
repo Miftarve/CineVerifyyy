@@ -1,0 +1,390 @@
+﻿/* Stile principale per la sezione AI */
+.ai-summary-section {
+    background: linear-gradient(135deg, #191e3a 0%, #2c2d5a 100%);
+    border-radius: 18px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    margin: 30px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+    .ai-summary-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #4776E6, #8E54E9);
+    }
+
+.ai-summary-container {
+    color: #f0f0f0;
+    position: relative;
+}
+
+/* Header del riassunto AI */
+.ai-summary-header {
+    padding: 22px 28px;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+    .ai-summary-header::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 5%;
+        width: 90%;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 8px rgba(142, 84, 233, 0.6);
+    }
+
+.ai-summary-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+    .ai-summary-title i {
+        font-size: 28px;
+        color: #8E54E9;
+        filter: drop-shadow(0 0 10px rgba(142, 84, 233, 0.5));
+        animation: pulsate 2s infinite alternate;
+    }
+
+@keyframes pulsate {
+    0% {
+        opacity: 0.7;
+        transform: scale(0.95);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+.ai-summary-title h3 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-close-summary {
+    background: transparent;
+    border: none;
+    color: #bbb;
+    font-size: 22px;
+    cursor: pointer;
+    transition: all 0.25s;
+    padding: 8px;
+    border-radius: 50%;
+}
+
+    .btn-close-summary:hover {
+        color: white;
+        transform: rotate(90deg);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+/* Contenuto del riassunto */
+.ai-summary-content {
+    padding: 30px 30px 20px;
+    position: relative;
+    min-height: 200px;
+}
+
+/* Stile del testo nel riassunto */
+.detailed-summary {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.8;
+    font-size: 16px;
+    color: #e0e0e0;
+    text-align: justify;
+}
+
+    .detailed-summary strong {
+        color: #fff;
+        font-weight: 600;
+    }
+
+    /* Riconosci titoli e applicare stili */
+    .detailed-summary h3,
+    .detailed-summary h4,
+    .detailed-summary p strong:first-child:last-child {
+        color: #8E54E9;
+        font-size: 20px;
+        margin: 28px 0 14px;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(142, 84, 233, 0.3);
+        padding-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .detailed-summary h3:first-child {
+            margin-top: 0;
+        }
+
+    /* Effetti speciali per alcuni paragrafi */
+    .detailed-summary p:first-of-type {
+        font-size: 18px;
+        color: #fff;
+        font-style: italic;
+        border-left: 3px solid #8E54E9;
+        padding-left: 18px;
+        margin-bottom: 25px;
+    }
+
+    /* Citazioni e recensioni */
+    .detailed-summary blockquote,
+    .detailed-summary p em {
+        font-style: italic;
+        color: #c2c2f0;
+        position: relative;
+    }
+
+/* Metadata del film */
+.summary-metadata {
+    margin-top: 35px;
+    padding: 22px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+    .summary-metadata::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, rgba(142, 84, 233, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+        z-index: 0;
+    }
+
+.metadata-item {
+    display: flex;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+}
+
+    .metadata-item:last-child {
+        margin-bottom: 0;
+    }
+
+.metadata-label {
+    font-weight: 600;
+    min-width: 150px;
+    color: #8E54E9;
+    position: relative;
+    padding-left: 24px;
+}
+
+    .metadata-label::before {
+        content: "\F587"; /* Icona BI film */
+        font-family: "bootstrap-icons";
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+.metadata-item:nth-child(2) .metadata-label::before {
+    content: "\F5B4"; /* Icona BI people */
+}
+
+.metadata-item:nth-child(3) .metadata-label::before {
+    content: "\F551"; /* Icona BI clock */
+}
+
+.metadata-value {
+    color: #fff;
+    flex: 1;
+}
+
+/* Animazioni di caricamento */
+.ai-summary-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+}
+
+.ai-spinner {
+    display: flex;
+    justify-content: center;
+    margin: 0 0 20px;
+}
+
+    .ai-spinner .bounce1,
+    .ai-spinner .bounce2,
+    .ai-spinner .bounce3 {
+        width: 18px;
+        height: 18px;
+        background: linear-gradient(135deg, #4776E6, #8E54E9);
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 6px;
+        animation: bounce 1.4s infinite ease-in-out both;
+        box-shadow: 0 0 10px rgba(142, 84, 233, 0.5);
+    }
+
+    .ai-spinner .bounce1 {
+        animation-delay: -0.32s;
+    }
+
+    .ai-spinner .bounce2 {
+        animation-delay: -0.16s;
+    }
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1.0);
+    }
+}
+
+.ai-summary-loading p {
+    font-size: 16px;
+    color: #c2c2f0;
+    text-align: center;
+    margin: 0;
+    font-style: italic;
+}
+
+/* Animazione del testo che appare */
+.ai-summary-fade-in {
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Footer della sezione AI */
+.ai-summary-footer {
+    padding: 16px 30px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ai-powered-by {
+    display: flex;
+    align-items: center;
+}
+
+.ai-brand {
+    color: #8E54E9;
+    font-weight: 600;
+    margin-left: 6px;
+    position: relative;
+}
+
+    .ai-brand::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(142, 84, 233, 0), rgba(142, 84, 233, 1), rgba(142, 84, 233, 0));
+    }
+
+/* Slide-in effect */
+.ai-summary-slide-in {
+    animation: slideInFromTop 0.5s ease-out forwards;
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Messaggio di errore */
+.ai-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    background: rgba(255, 59, 48, 0.1);
+    border-left: 4px solid rgba(255, 59, 48, 0.7);
+    border-radius: 4px;
+}
+
+    .ai-error i {
+        font-size: 24px;
+        color: #ff3b30;
+    }
+
+/* Pulsante per scarica PDF */
+.summary-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    gap: 15px;
+}
+
+.btn-ai-action {
+    background: linear-gradient(to right, #4776E6, #8E54E9);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(71, 118, 230, 0.3);
+}
+
+    .btn-ai-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 20px rgba(71, 118, 230, 0.4);
+    }
+
+    .btn-ai-action:active {
+        transform: translateY(1px);
+    }
+
+    .btn-ai-action i {
+        font-size: 18px;
+    }

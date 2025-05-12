@@ -1,0 +1,280 @@
+﻿/* Stili per il testo generato dall'AI */
+.ai-summary-section {
+    background: linear-gradient(135deg, #1f1f2f 0%, #2a2a45 100%);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    padding: 0;
+    margin: 30px 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.ai-summary-container {
+    color: #f0f0f0;
+    position: relative;
+}
+
+.ai-summary-header {
+    padding: 20px 25px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ai-summary-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+    .ai-summary-title i {
+        font-size: 24px;
+        color: #64b5f6;
+        filter: drop-shadow(0 0 10px rgba(100, 181, 246, 0.6));
+    }
+
+    .ai-summary-title h3 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+
+.btn-close-summary {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 5px;
+}
+
+    .btn-close-summary:hover {
+        color: white;
+        transform: scale(1.1);
+    }
+
+.ai-summary-content {
+    padding: 25px;
+    position: relative;
+    min-height: 200px;
+}
+
+/* Stili per i titoli nel testo AI */
+.ai-section-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #64b5f6;
+    margin: 1.8rem 0 0.8rem 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(100, 181, 246, 0.3);
+}
+
+    .ai-section-title:first-child {
+        margin-top: 0;
+    }
+
+/* Stili per i paragrafi nel testo AI */
+.ai-paragraph {
+    margin-bottom: 18px;
+    line-height: 1.7;
+    text-align: justify;
+    font-size: 16px;
+    color: #e0e0e0;
+}
+
+/* Elenchi puntati */
+.ai-list {
+    margin: 15px 0 20px 25px;
+    padding: 0;
+}
+
+.ai-list-item {
+    margin-bottom: 10px;
+    position: relative;
+    line-height: 1.6;
+}
+
+/* Citazioni */
+.ai-quote {
+    border-left: 4px solid #64b5f6;
+    padding-left: 20px;
+    margin: 20px 0;
+    font-style: italic;
+    color: #bbb;
+}
+
+/* Metadati del film */
+.summary-metadata {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metadata-item {
+    display: flex;
+    margin-bottom: 12px;
+}
+
+.metadata-label {
+    font-weight: 600;
+    min-width: 140px;
+    color: #64b5f6;
+}
+
+.metadata-value {
+    color: #e0e0e0;
+    flex: 1;
+}
+
+/* Separatore con icona */
+.ai-divider {
+    display: flex;
+    align-items: center;
+    margin: 25px 0;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+    .ai-divider:before, .ai-divider:after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .ai-divider:before {
+        margin-right: 15px;
+    }
+
+    .ai-divider:after {
+        margin-left: 15px;
+    }
+
+    .ai-divider i {
+        font-size: 14px;
+    }
+
+/* Animazioni e transizioni */
+.ai-summary-fade-in {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes typing {
+    from {
+        width: 0
+    }
+
+    to {
+        width: 100%
+    }
+}
+
+/* Loader di caricamento */
+.ai-spinner {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+    .ai-spinner .bounce1,
+    .ai-spinner .bounce2,
+    .ai-spinner .bounce3 {
+        width: 15px;
+        height: 15px;
+        background-color: #64b5f6;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 5px;
+        animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .ai-spinner .bounce1 {
+        animation-delay: -0.32s;
+    }
+
+    .ai-spinner .bounce2 {
+        animation-delay: -0.16s;
+    }
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1.0);
+    }
+}
+
+/* PDF Controls */
+.pdf-controls {
+    margin-top: 40px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Errore AI */
+.ai-error {
+    padding: 20px;
+    background: rgba(255, 59, 48, 0.1);
+    border-left: 4px solid rgba(255, 59, 48, 0.6);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+    .ai-error i {
+        font-size: 24px;
+        color: #ff3b30;
+    }
+
+/* Effetto testo in evidenza */
+.ai-highlight {
+    background: linear-gradient(104deg, rgba(100, 181, 246, 0) 0.9%, rgba(100, 181, 246, 0.2) 2.4%, rgba(100, 181, 246, 0.2) 97.5%, rgba(100, 181, 246, 0) 98.6%);
+    padding: 0 5px;
+    border-radius: 2px;
+    font-weight: 500;
+}
+
+/* Enfasi */
+.ai-emphasis {
+    font-style: italic;
+    color: #90caf9;
+}
+
+/* Footer dell'analisi */
+.ai-summary-footer {
+    padding: 15px 25px;
+    background: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 14px;
+    color: #aaa;
+}
+
+.ai-brand {
+    color: #64b5f6;
+    font-weight: 600;
+    margin-left: 5px;
+}

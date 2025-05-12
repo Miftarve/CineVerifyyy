@@ -1,0 +1,2760 @@
+﻿@page
+@model CineVerify.Pages.Admin.EditMovieModel
+@{
+    ViewData["Title"] = "Modifica Film";
+}
+
+<!-- Header della pagina -->
+<div class="edit-movie-header">
+    <div class="header-content">
+        <div class="header-left">
+            <h1 class="page-title">
+                <i class="bi bi-pencil-square title-icon"></i>
+                Modifica Film
+            </h1>
+            <p class="breadcrumb">
+                <a asp-page="/Admin/Dashboard">Dashboard</a> /
+                <a asp-page="/Admin/Movies">Film</a> /
+                <span>Modifica</span>
+            </p>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="btn btn-outline-dark btn-sm" id="togglePreview">
+                <i class="bi bi-eye"></i> Anteprima
+            </button>
+            <a asp-page="/Movies/Details" asp-route-id="@Model.Movie.Id" class="btn btn-outline-primary btn-sm" target="_blank">
+                <i class="bi bi-box-arrow-up-right"></i> Visualizza pagina
+            </a>
+            <a asp-page="./Movies" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Torna all'elenco
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    var statusClass = Model.StatusMessage.StartsWith("Error") ? "danger" : "success";
+    <div class="alert alert-@statusClass alert-dismissible fade show" role="alert">
+        <i class="bi bi-@(statusClass == "danger" ? "exclamation-triangle" : "check-circle")-fill me-2"></i>
+        @Model.StatusMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Container principale con layout responsive -->
+<div class="edit-movie-container">
+    <!-- Pannello editor principale -->
+    <div class="editor-panel">
+        <div class="edit-tabs">
+            <div class="nav nav-tabs" id="movieEditTabs" role="tablist">
+                <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Informazioni principali</span>
+                </button>
+                <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab" aria-controls="media" aria-selected="false">
+                    <i class="bi bi-image"></i>
+                    <span>Media</span>
+                </button>
+                <button class="nav-link" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab" aria-controls="description" aria-selected="false">
+                    <i class="bi bi-file-text"></i>
+                    <span>Descrizione</span>
+                </button>
+            </div>
+        </div>
+
+        <form method="post" id="editMovieForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+            <input type="hidden" asp-for="Movie.Id" />
+            <input type="hidden" asp-for="Movie.TmdbId" />
+            <input type="hidden" asp-for="Movie.ImdbId" />
+            <input type="hidden" asp-for="Movie.DateAdded" />
+
+            <div class="tab-content" id="movieEditTabsContent">
+                <!-- Tab: Informazioni principali -->
+                <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                    <div class="form-section">
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label asp-for="Movie.Title" class="form-label">Titolo</label>
+                                <input asp-for="Movie.Title" class="form-control" required data-preview="title" />
+                                <span asp-validation-for="Movie.Title" class="validation-message"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Movie.OriginalTitle" class="form-label">Titolo Originale</label>
+                                <input asp-for="Movie.OriginalTitle" class="form-control" />
+                                <span asp-validation-for="Movie.OriginalTitle" class="validation-message"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label asp-for="Movie.ReleaseDate" class="form-label">Data di Uscita</label>
+                                <div class="input-group date-picker">
+                                    <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                                    <input type="date" asp-for="Movie.ReleaseDate" class="form-control" data-preview="year" />
+                                </div>
+                                <span asp-validation-for="Movie.ReleaseDate" class="validation-message"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="GenresString" class="form-label">Generi</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-tags"></i></span>
+                                    <input asp-for="GenresString" class="form-control" placeholder="Azione, Commedia, Thriller..." data-preview="genres" />
+                                </div>
+                                <span asp-validation-for="GenresString" class="validation-message"></span>
+                                <div class="form-hint">Separare i generi con virgole</div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label asp-for="Movie.Rating" class="form-label">Valutazione</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" min="0" max="10" asp-for="Movie.Rating" class="form-control" data-preview="rating" />
+                                    <span class="input-group-text">/10</span>
+                                </div>
+                                <span asp-validation-for="Movie.Rating" class="validation-message"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Movie.VoteCount" class="form-label">Numero di Voti</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-people"></i></span>
+                                    <input type="number" min="0" asp-for="Movie.VoteCount" class="form-control" />
+                                </div>
+                                <span asp-validation-for="Movie.VoteCount" class="validation-message"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="verification-toggle">
+                                <label class="toggle-label">
+                                    <div class="toggle-info">
+                                        <span>Stato del film</span>
+                                        <div class="form-hint">I film verificati appaiono nei risultati di ricerca e nelle raccomandazioni</div>
+                                    </div>
+                                    <div class="switch-toggle">
+                                        <input class="form-check-input" asp-for="Movie.IsVerified" type="checkbox" role="switch" />
+                                        <span class="status-text" data-on="Verificato" data-off="Non verificato"></span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Media -->
+                <div class="tab-pane fade" id="media" role="tabpanel" aria-labelledby="media-tab">
+                    <div class="form-section">
+                        <div class="poster-backdrop-grid">
+                            <div class="form-group">
+                                <label class="form-label">Poster</label>
+                                <div class="media-preview">
+                                    <div class="preview-container" id="posterPreviewContainer">
+                                        @if (!string.IsNullOrEmpty(Model.Movie?.PosterPath))
+                                        {
+                                            <img src="@Model.Movie.PosterPath" alt="Poster" class="preview-image" id="posterPreview" />
+                                            <button type="button" class="btn-clear-image" id="clearPoster">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <div class="no-image" id="posterPlaceholder">
+                                                <i class="bi bi-film"></i>
+                                                <span>Nessun poster</span>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="media-actions">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="selectPosterBtn">
+                                            <i class="bi bi-upload"></i> Carica
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="searchPostersBtn">
+                                            <i class="bi bi-search"></i> Cerca
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-group mt-2">
+                                    <label asp-for="Movie.PosterPath" class="form-label">URL Poster</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-link"></i></span>
+                                        <input asp-for="Movie.PosterPath" class="form-control" id="posterUrlInput" data-preview="poster" />
+                                    </div>
+                                    <span asp-validation-for="Movie.PosterPath" class="validation-message"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Sfondo</label>
+                                <div class="media-preview">
+                                    <div class="preview-container backdrop" id="backdropPreviewContainer">
+                                        @if (!string.IsNullOrEmpty(Model.Movie?.BackdropPath))
+                                        {
+                                            <img src="@Model.Movie.BackdropPath" alt="Backdrop" class="preview-image" id="backdropPreview" />
+                                            <button type="button" class="btn-clear-image" id="clearBackdrop">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <div class="no-image" id="backdropPlaceholder">
+                                                <i class="bi bi-image"></i>
+                                                <span>Nessuno sfondo</span>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="media-actions">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="selectBackdropBtn">
+                                            <i class="bi bi-upload"></i> Carica
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="searchBackdropsBtn">
+                                            <i class="bi bi-search"></i> Cerca
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="form-group mt-2">
+                                    <label asp-for="Movie.BackdropPath" class="form-label">URL Sfondo</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-link"></i></span>
+                                        <input asp-for="Movie.BackdropPath" class="form-control" id="backdropUrlInput" />
+                                    </div>
+                                    <span asp-validation-for="Movie.BackdropPath" class="validation-message"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Movie.TrailerUrl" class="form-label">Trailer</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-youtube"></i></span>
+                                <input asp-for="Movie.TrailerUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
+                                <button type="button" class="btn btn-outline-secondary" id="testTrailerBtn">
+                                    <i class="bi bi-play"></i> Test
+                                </button>
+                            </div>
+                            <span asp-validation-for="Movie.TrailerUrl" class="validation-message"></span>
+                            <div class="form-hint">Inserisci un URL YouTube completo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Descrizione -->
+                <div class="tab-pane fade" id="description" role="tabpanel" aria-labelledby="description-tab">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label asp-for="Movie.Description" class="form-label">Descrizione completa</label>
+                            <div class="description-editor">
+                                <div class="editor-toolbar">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary toolbar-btn" data-action="bold">
+                                        <i class="bi bi-type-bold"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary toolbar-btn" data-action="italic">
+                                        <i class="bi bi-type-italic"></i>
+                                    </button>
+                                    <div class="toolbar-divider"></div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary toolbar-btn" data-action="paragraph">
+                                        <i class="bi bi-paragraph"></i>
+                                    </button>
+                                    <div class="toolbar-divider"></div>
+                                </div>
+                                <textarea asp-for="Movie.Description" class="form-control description-textarea" rows="12" data-preview="description"></textarea>
+                            </div>
+                            <span asp-validation-for="Movie.Description" class="validation-message"></span>
+
+                            <div class="text-stats mt-2">
+                                <div class="stat">
+                                    <span class="stat-label">Caratteri:</span>
+                                    <span class="stat-value" id="charCount">0</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Parole:</span>
+                                    <span class="stat-value" id="wordCount">0</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Tempo di lettura:</span>
+                                    <span class="stat-value" id="readingTime">0 min</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Analisi IA - SEZIONE MIGLIORATA -->
+
+            </div>
+
+            <div class="form-actions">
+                <div class="primary-actions">
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <i class="bi bi-check-lg"></i>
+                        <span>Salva Modifiche</span>
+                    </button>
+                    <a asp-page="./Movies" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg"></i>
+                        <span>Annulla</span>
+                    </a>
+                </div>
+                <div class="secondary-actions">
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash"></i>
+                        <span>Elimina</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Pannello di anteprima -->
+    <div class="preview-panel" id="previewPanel">
+        <div class="preview-header">
+            <h3>Anteprima</h3>
+            <button type="button" class="btn-close" id="closePreview" aria-label="Close"></button>
+        </div>
+        <div class="preview-content">
+            <div class="movie-preview">
+                <div class="preview-backdrop">
+                    <div class="backdrop-image" id="previewBackdrop" style="background-image: url('@Model.Movie.BackdropPath')"></div>
+                    <div class="backdrop-overlay"></div>
+                </div>
+
+                <div class="preview-main">
+                    <div class="preview-poster-container">
+                        @if (!string.IsNullOrEmpty(Model.Movie?.PosterPath))
+                        {
+                            <img src="@Model.Movie.PosterPath" alt="@Model.Movie.Title" class="preview-poster" id="previewPoster" />
+                        }
+                        else
+                        {
+                            <div class="preview-poster-placeholder" id="previewPosterPlaceholder">
+                                <i class="bi bi-film"></i>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="preview-details">
+                        <h1 class="preview-title" id="previewTitle">@Model.Movie.Title</h1>
+                        <div class="preview-meta">
+                            <span class="preview-year" id="previewYear">@Model.Movie?.ReleaseDate?.Year</span>
+
+                            <div class="preview-rating">
+                                <i class="bi bi-star-fill"></i>
+                                <span id="previewRating">@Model.Movie.Rating.ToString("0.0")</span>
+                            </div>
+                        </div>
+
+                        <div class="preview-genres" id="previewGenres">
+                            @if (!string.IsNullOrEmpty(Model.GenresString))
+                            {
+                                foreach (var genre in Model.GenresString.Split(',').Select(g => g.Trim()))
+                                {
+                                    <span class="genre-badge">@genre</span>
+                                }
+                            }
+                        </div>
+
+                        <div class="preview-description" id="previewDescription">
+                            @if (!string.IsNullOrEmpty(Model.Movie?.Description))
+                            {
+                                @Html.Raw(Model.Movie.Description.Replace("\n", "<br>"))
+                            }
+                            else
+                            {
+                                <p class="text-muted">Nessuna descrizione disponibile</p>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Movie?.TrailerUrl))
+                        {
+                            <button type="button" class="btn btn-primary btn-trailer" id="previewTrailerBtn">
+                                <i class="bi bi-play-fill"></i>
+                                <span>Guarda il trailer</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-stats">
+                <div class="stat-item">
+                    <div class="stat-icon reviews">
+                        <i class="bi bi-chat-left-text"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4>@Model.ReviewsCount</h4>
+                        <p>Recensioni</p>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon favorites">
+                        <i class="bi bi-heart"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4>@Model.FavoritesCount</h4>
+                        <p>Preferiti</p>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-icon views">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4>@Model.ViewsCount</h4>
+                        <p>Visualizzazioni</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per anteprima AI a schermo intero -->
+<div class="modal fade" id="aiPreviewModal" tabindex="-1" aria-labelledby="aiPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiPreviewModalLabel">
+                    <i class="bi bi-robot"></i> Analisi di "@Model.Movie.Title"
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ai-fullscreen-content">
+                    @if (!string.IsNullOrEmpty(Model.Movie.GeminiAnalysis))
+                    {
+                        <div class="ai-analysis-formatted">
+                            @Html.Raw(Model.Movie.GeminiAnalysis.Replace("\n\n", "<div class=\"ai-paragraph-break\"></div>").Replace("\n", "<br>"))
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ai-empty-state centered">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <p>Nessuna analisi disponibile</p>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" id="downloadAiPdfBtn">
+                    <i class="bi bi-file-pdf"></i> Scarica come PDF
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal eliminazione -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Conferma eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="delete-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <p>Sei sicuro di voler eliminare il film "<strong>@Model.Movie.Title</strong>"?</p>
+                    <p class="text-danger">Questa azione è irreversibile e rimuoverà anche tutte le recensioni e i dati associati.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+                <form method="post" asp-page-handler="Delete">
+                    <input type="hidden" name="id" value="@Model.Movie.Id" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Elimina definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per il trailer -->
+<div class="modal fade" id="trailerModal" tabindex="-1" aria-labelledby="trailerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="trailerModalLabel">Trailer: @Model.Movie.Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="trailer-container">
+                    <div id="trailerPlaceholder" class="trailer-placeholder">
+                        <i class="bi bi-film"></i>
+                        <p>Inserisci un URL YouTube valido</p>
+                    </div>
+                    <iframe id="trailerFrame" style="display:none" width="100%" height="100%" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per cercare poster -->
+<div class="modal fade" id="searchPostersModal" tabindex="-1" aria-labelledby="searchPostersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchPostersModalLabel">Cerca poster per "@Model.Movie.Title"</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="search-controls mb-3">
+                    <div class="input-group">
+                        <input type="text" id="posterSearchQuery" class="form-control" placeholder="Cerca poster..."
+                               value="@Model.Movie.Title poster official">
+                        <button class="btn btn-primary" type="button" id="searchPosterButton">
+                            <i class="bi bi-search"></i> Cerca
+                        </button>
+                    </div>
+                </div>
+
+                <div class="image-results" id="posterResults">
+                    <div class="searching-message">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Ricerca in corso...</span>
+                        </div>
+                        <p>Ricerca poster in corso...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per cercare sfondi -->
+<div class="modal fade" id="searchBackdropsModal" tabindex="-1" aria-labelledby="searchBackdropsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchBackdropsModalLabel">Cerca sfondi per "@Model.Movie.Title"</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="search-controls mb-3">
+                    <div class="input-group">
+                        <input type="text" id="backdropSearchQuery" class="form-control" placeholder="Cerca sfondi..."
+                               value="@Model.Movie.Title backdrop wallpaper">
+                        <button class="btn btn-primary" type="button" id="searchBackdropButton">
+                            <i class="bi bi-search"></i> Cerca
+                        </button>
+                    </div>
+                </div>
+
+                <div class="image-results" id="backdropResults">
+                    <div class="searching-message">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Ricerca in corso...</span>
+                        </div>
+                        <p>Ricerca sfondi in corso...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Stili per la sezione di analisi AI migliorata */
+.ai-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    background-color: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.ai-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.ai-info i {
+    font-size: 28px;
+    color: #6c5ce7;
+    background-color: rgba(108, 92, 231, 0.15);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 3px 10px rgba(108, 92, 231, 0.2);
+}
+
+.ai-info h5 {
+    margin-bottom: 4px;
+    font-weight: 600;
+    color: #333;
+}
+
+.ai-info p {
+    margin-bottom: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.regenerate-btn {
+    position: relative;
+    padding-right: 30px;
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    border: none;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.regenerate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+}
+
+.regenerate-btn:active {
+    transform: translateY(0);
+}
+
+/* Layout del pannello di analisi AI a due colonne */
+.ai-analysis-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* Stile della card di anteprima (lato sinistro) */
+.ai-preview-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    overflow: hidden;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.ai-preview-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.ai-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.ai-card-header h5 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-card-header h5 i {
+    color: #6c5ce7;
+}
+
+.ai-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    gap: 6px;
+    box-shadow: 0 2px 5px rgba(108, 92, 231, 0.3);
+}
+
+.ai-badge i {
+    font-size: 10px;
+}
+
+.ai-card-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.ai-content-scrollable {
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.ai-preview-text {
+    color: #333;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.ai-empty-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 40px;
+    text-align: center;
+    color: #aaa;
+}
+
+.ai-empty-state i {
+    font-size: 40px;
+    margin-bottom: 15px;
+    color: #ddd;
+}
+
+.ai-empty-state p {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.ai-empty-state span {
+    font-size: 14px;
+    max-width: 80%;
+}
+
+.ai-card-footer {
+    padding: 12px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.ai-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Stili per l'indicatore di qualità */
+.ai-analysis-quality {
+    background: rgba(108, 92, 231, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-left: 4px solid #6c5ce7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.quality-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+}
+
+.quality-rating {
+    font-size: 16px;
+}
+
+.quality-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+}
+
+.quality-stats {
+    display: flex;
+    gap: 10px;
+}
+
+.stat-bubble {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Stile della card dell'editor (lato destro) */
+.ai-editor-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    overflow: hidden;
+    height: 100%;
+}
+
+.ai-editor-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.ai-textarea-container {
+    height: 100%;
+    padding: 8px;
+}
+
+.ai-textarea {
+    width: 100%;
+    height: 100%;
+    resize: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 14px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+.ai-textarea:focus {
+    border-color: #6c5ce7;
+    box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+}
+
+/* Strumenti di editing */
+.ai-tools-container {
+    width: 100%;
+}
+
+.ai-tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.tool-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tool-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 0;
+}
+
+.tool-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.btn-tool, .btn-focus {
+    text-align: left;
+    font-size: 12px;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+
+.btn-tool i, .btn-focus i {
+    margin-right: 4px;
+}
+
+/* Modal AI a schermo intero */
+.ai-fullscreen-content {
+    padding: 15px;
+}
+
+.ai-analysis-formatted {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #333;
+}
+
+.ai-paragraph-break {
+    margin-bottom: 15px;
+}
+
+.ai-empty-state.centered {
+    padding: 80px 20px;
+}
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Codice esistente conservato ---
+            const togglePreviewBtn = document.getElementById('togglePreview');
+            const previewPanel = document.getElementById('previewPanel');
+            const closePreviewBtn = document.getElementById('closePreview');
+            const previewInputs = document.querySelectorAll('[data-preview]');
+
+            // Toggle anteprima
+            togglePreviewBtn.addEventListener('click', function() {
+                document.body.classList.toggle('preview-active');
+                updatePreview();
+            });
+
+            closePreviewBtn.addEventListener('click', function() {
+                document.body.classList.remove('preview-active');
+            });
+
+            // Aggiornamento anteprima in tempo reale
+            previewInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    updatePreviewField(this.getAttribute('data-preview'), this.value);
+                });
+            });
+
+            // --- Conteggio caratteri/parole ---
+            const descriptionTextarea = document.querySelector('.description-textarea');
+            const charCount = document.getElementById('charCount');
+            const wordCount = document.getElementById('wordCount');
+            const readingTime = document.getElementById('readingTime');
+
+            if (descriptionTextarea) {
+                descriptionTextarea.addEventListener('input', updateTextStats);
+                // Inizializza conteggi
+                updateTextStats();
+            }
+
+            function updateTextStats() {
+                const text = descriptionTextarea.value;
+
+                // Caratteri
+                charCount.textContent = text.length;
+
+                // Parole
+                const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+                wordCount.textContent = words.length;
+
+                // Tempo di lettura (assumendo 200 parole/minuto)
+                const minutes = Math.ceil(words.length / 200);
+                readingTime.textContent = minutes + ' min';
+            }
+
+            // --- Gestione Poster & Backdrop ---
+            const posterUrlInput = document.getElementById('posterUrlInput');
+            const backdropUrlInput = document.getElementById('backdropUrlInput');
+            const posterPreview = document.getElementById('posterPreview');
+            const backdropPreview = document.getElementById('backdropPreview');
+            const posterPlaceholder = document.getElementById('posterPlaceholder');
+            const backdropPlaceholder = document.getElementById('backdropPlaceholder');
+            const clearPosterBtn = document.getElementById('clearPoster');
+            const clearBackdropBtn = document.getElementById('clearBackdrop');
+
+            // Aggiornamento anteprima da URL
+            posterUrlInput.addEventListener('input', function() {
+                updateMediaPreview('poster', this.value);
+            });
+
+            backdropUrlInput.addEventListener('input', function() {
+                updateMediaPreview('backdrop', this.value);
+            });
+
+            // Pulsanti di cancellazione
+            if (clearPosterBtn) {
+                clearPosterBtn.addEventListener('click', function() {
+                    posterUrlInput.value = '';
+                    updateMediaPreview('poster', '');
+                });
+            }
+
+            if (clearBackdropBtn) {
+                clearBackdropBtn.addEventListener('click', function() {
+                    backdropUrlInput.value = '';
+                    updateMediaPreview('backdrop', '');
+                });
+            }
+
+            // --- Trailer Preview ---
+            const trailerUrlInput = document.querySelector('input[name="Movie.TrailerUrl"]');
+            const testTrailerBtn = document.getElementById('testTrailerBtn');
+            const trailerFrame = document.getElementById('trailerFrame');
+            const trailerPlaceholder = document.getElementById('trailerPlaceholder');
+            const trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
+            const previewTrailerBtn = document.getElementById('previewTrailerBtn');
+
+            if (testTrailerBtn) {
+                testTrailerBtn.addEventListener('click', function() {
+                    const trailerUrl = trailerUrlInput.value;
+                    loadTrailer(trailerUrl);
+                    trailerModal.show();
+                });
+            }
+
+            if (previewTrailerBtn) {
+                previewTrailerBtn.addEventListener('click', function() {
+                    const trailerUrl = trailerUrlInput.value;
+                    loadTrailer(trailerUrl);
+                    trailerModal.show();
+                });
+            }
+
+            // Chiudi trailer quando si chiude il modale
+            document.getElementById('trailerModal').addEventListener('hidden.bs.modal', function () {
+                trailerFrame.src = '';
+                trailerFrame.style.display = 'none';
+                trailerPlaceholder.style.display = 'flex';
+            });
+
+            // --- File Upload ---
+            const selectPosterBtn = document.getElementById('selectPosterBtn');
+            const selectBackdropBtn = document.getElementById('selectBackdropBtn');
+
+            // Non implementato perché richiederebbe un file input reale e gestione lato server
+            if (selectPosterBtn) {
+                selectPosterBtn.addEventListener('click', function() {
+                    // Mostra un toast informativo
+                    showToast('Caricamento file non implementato in questa demo', 'warning');
+                });
+            }
+
+            if (selectBackdropBtn) {
+                selectBackdropBtn.addEventListener('click', function() {
+                    // Mostra un toast informativo
+                    showToast('Caricamento file non implementato in questa demo', 'warning');
+                });
+            }
+
+            // --- Ricerca immagini ---
+            const searchPostersBtn = document.getElementById('searchPostersBtn');
+            const searchBackdropsBtn = document.getElementById('searchBackdropsBtn');
+            const searchPosterButton = document.getElementById('searchPosterButton');
+            const searchBackdropButton = document.getElementById('searchBackdropButton');
+            const postersModal = new bootstrap.Modal(document.getElementById('searchPostersModal'));
+            const backdropsModal = new bootstrap.Modal(document.getElementById('searchBackdropsModal'));
+
+            if (searchPostersBtn) {
+                searchPostersBtn.addEventListener('click', function() {
+                    postersModal.show();
+                    simulateImageSearch('poster');
+                });
+            }
+
+            if (searchBackdropsBtn) {
+                searchBackdropsBtn.addEventListener('click', function() {
+                    backdropsModal.show();
+                    simulateImageSearch('backdrop');
+                });
+            }
+
+            if (searchPosterButton) {
+                searchPosterButton.addEventListener('click', function() {
+                    simulateImageSearch('poster');
+                });
+            }
+
+            if (searchBackdropButton) {
+                searchBackdropButton.addEventListener('click', function() {
+                    simulateImageSearch('backdrop');
+                });
+            }
+
+                // Codice migliorato per il pulsante "Rigenera analisi"
+        const regenerateBtn = document.getElementById('regenerateBtn');
+        const regenerateSpinner = document.getElementById('regenerateSpinner');
+        const aiTextarea = document.querySelector('.ai-textarea');
+        const aiPreviewText = document.querySelector('.ai-preview-text');
+        const aiEmptyState = document.querySelector('.ai-empty-state');
+
+        if (regenerateBtn) {
+            regenerateBtn.type = 'button'; // Cambia da submit a button
+
+            regenerateBtn.addEventListener('click', function() {
+                // Mostra lo spinner
+                const btnContent = regenerateBtn.querySelector('.btn-content');
+                if (btnContent) btnContent.style.display = 'none';
+                if (regenerateSpinner) regenerateSpinner.style.display = 'inline-block';
+
+                // Mostra un toast informativo
+                showToast('Generazione analisi in corso...', 'info');
+
+                // Crea i dati del form e aggiungi i necessari
+                const formData = new FormData();
+                formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+                formData.append('id', @Model.Movie.Id);
+
+                // Usa un approccio diverso: richiesta fetch standard con form data
+                fetch('?handler=RegenerateAnalysis&id=@Model.Movie.Id', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    // Controlla se la risposta è OK
+                    if (!response.ok) {
+                        throw new Error(`Server ha risposto con stato ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Risposta ricevuta:", data); // Per debugging
+
+                    if (data && data.success && data.analysis) {
+                        // Aggiorna la textarea
+                        if (aiTextarea) {
+                            aiTextarea.value = data.analysis;
+                        }
+
+                        // Aggiorna la visualizzazione anteprima
+                        if (aiPreviewText) {
+                            // Nascondi empty state se presente
+                            if (aiEmptyState) {
+                                aiEmptyState.style.display = 'none';
+                                document.querySelector('.ai-content-scrollable').style.display = 'block';
+                            }
+
+                            // Formatta il testo per la visualizzazione
+                            aiPreviewText.innerHTML = data.analysis.replace(/\n/g, '<br/>');
+
+                            // Aggiorniamo l'indicatore di qualità
+                            updateQualityIndicator(data.analysis);
+                        }
+
+                        showToast('Analisi generata con successo!', 'success');
+                    } else {
+                        showToast('Risposta non valida dal server', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore:', error);
+                    showToast(`Errore: ${error.message}`, 'error');
+                })
+                .finally(() => {
+                    // Ripristina il pulsante
+                    if (btnContent) btnContent.style.display = 'flex';
+                    if (regenerateSpinner) regenerateSpinner.style.display = 'none';
+                });
+            });
+        }
+
+
+                // Funzione per aggiornare l'indicatore di qualità
+        function updateQualityIndicator(text) {
+            const qualityRating = document.querySelector('.quality-rating');
+            const qualityLabel = document.querySelector('.quality-label');
+            const wordCountElement = document.querySelector('.stat-bubble:first-child span');
+            const readingTimeElement = document.querySelector('.stat-bubble:last-child span');
+
+            if (!qualityRating || !qualityLabel) return;
+
+            // Calcola la qualità in base alla lunghezza
+            const wordCount = text.split(/\s+/).length;
+            const readingTime = Math.ceil(wordCount / 200);
+            let quality = "Standard";
+            let qualityColor = "#f1c40f";
+            let stars = 3;
+
+            if (text.length > 5000) {
+                quality = "Approfondita";
+                qualityColor = "#2ecc71";
+                stars = 5;
+            } else if (text.length > 3000) {
+                quality = "Dettagliata";
+                qualityColor = "#27ae60";
+                stars = 4;
+            } else if (text.length < 1500) {
+                quality = "Concisa";
+                qualityColor = "#f39c12";
+                stars = 2;
+            }
+
+            // Aggiorna le stelle di valutazione
+            qualityRating.innerHTML = '';
+            qualityRating.style.color = qualityColor;
+
+            for (let i = 1; i <= 5; i++) {
+                const starElement = document.createElement('i');
+                starElement.className = `bi ${i <= stars ? "bi-star-fill" : "bi-star"}`;
+                qualityRating.appendChild(starElement);
+            }
+
+            // Aggiorna l'etichetta di qualità
+            qualityLabel.innerHTML = `Qualità: <span style="color: ${qualityColor}">${quality}</span>`;
+
+            // Aggiorna il conteggio parole e il tempo di lettura
+            if (wordCountElement) wordCountElement.textContent = `${wordCount} parole`;
+            if (readingTimeElement) readingTimeElement.textContent = `${readingTime} min lettura`;
+        }
+            // --- Funzioni helper dal codice originale ---
+
+            // Aggiorna tutti i campi di anteprima
+            function updatePreview() {
+                updatePreviewField('title', document.querySelector('[data-preview="title"]').value);
+                updatePreviewField('year', document.querySelector('[data-preview="year"]').value);
+                updatePreviewField('rating', document.querySelector('[data-preview="rating"]').value);
+                updatePreviewField('genres', document.querySelector('[data-preview="genres"]').value);
+                updatePreviewField('description', document.querySelector('[data-preview="description"]').value);
+                updatePreviewField('poster', document.querySelector('#posterUrlInput').value);
+
+                // Aggiorna visibilità pulsante trailer
+                const trailerUrl = trailerUrlInput.value;
+                document.getElementById('previewTrailerBtn').style.display = trailerUrl ? 'flex' : 'none';
+            }
+
+            // Aggiorna un singolo campo di anteprima
+            function updatePreviewField(field, value) {
+                switch(field) {
+                    case 'title':
+                        document.getElementById('previewTitle').textContent = value || 'Titolo Film';
+                        break;
+                    case 'year':
+                        const date = new Date(value);
+                        document.getElementById('previewYear').textContent = !isNaN(date.getFullYear()) ? date.getFullYear() : '';
+                        break;
+                    case 'rating':
+                        document.getElementById('previewRating').textContent = parseFloat(value).toFixed(1);
+                        break;
+                    case 'genres':
+                        const genresContainer = document.getElementById('previewGenres');
+                        genresContainer.innerHTML = '';
+
+                        if (value) {
+                            const genres = value.split(',').map(g => g.trim()).filter(g => g);
+                                                        genres.forEach(genre => {
+                                const badge = document.createElement('span');
+                                badge.classList.add('genre-badge');
+                                badge.textContent = genre;
+                                genresContainer.appendChild(badge);
+                            });
+                        }
+                        break;
+                    case 'description':
+                        const descContainer = document.getElementById('previewDescription');
+                        descContainer.innerHTML = value ? value.replace(/\n/g, '<br>') : '<p class="text-muted">Nessuna descrizione disponibile</p>';
+                        break;
+                    case 'poster':
+                        updateMediaPreview('poster', value);
+                        break;
+                }
+            }
+
+            // Aggiorna anteprima media (poster o backdrop)
+            function updateMediaPreview(type, url) {
+                if (type === 'poster') {
+                    const posterPreviewContainer = document.getElementById('posterPreviewContainer');
+                    const previewPoster = document.getElementById('previewPoster');
+                    const previewPosterPlaceholder = document.getElementById('previewPosterPlaceholder');
+
+                    if (url) {
+                        // Aggiorna anteprima card
+                        if (posterPreviewContainer) {
+                            if (!posterPreview) {
+                                const img = document.createElement('img');
+                                img.id = 'posterPreview';
+                                img.className = 'preview-image';
+                                img.alt = 'Poster';
+                                posterPreviewContainer.prepend(img);
+
+                                if (posterPlaceholder) {
+                                    posterPlaceholder.style.display = 'none';
+                                }
+
+                                if (!clearPosterBtn) {
+                                    const btn = document.createElement('button');
+                                    btn.type = 'button';
+                                    btn.className = 'btn-clear-image';
+                                    btn.id = 'clearPoster';
+                                    btn.innerHTML = '<i class="bi bi-x"></i>';
+                                    posterPreviewContainer.appendChild(btn);
+
+                                    btn.addEventListener('click', function() {
+                                        posterUrlInput.value = '';
+                                        updateMediaPreview('poster', '');
+                                    });
+                                }
+                            }
+
+                            document.getElementById('posterPreview').src = url;
+                            if (posterPlaceholder) {
+                                posterPlaceholder.style.display = 'none';
+                            }
+                            if (clearPosterBtn) {
+                                clearPosterBtn.style.display = 'block';
+                            }
+                        }
+
+                        // Aggiorna anteprima laterale
+                        if (previewPoster) {
+                            previewPoster.src = url;
+                            previewPoster.style.display = 'block';
+                            if (previewPosterPlaceholder) {
+                                previewPosterPlaceholder.style.display = 'none';
+                            }
+                        }
+                    } else {
+                        // Pulisci anteprima card
+                        if (posterPreviewContainer) {
+                            if (posterPreview) {
+                                posterPreview.remove();
+                            }
+                            if (posterPlaceholder) {
+                                posterPlaceholder.style.display = 'flex';
+                            }
+                            if (clearPosterBtn) {
+                                clearPosterBtn.style.display = 'none';
+                            }
+                        }
+
+                        // Pulisci anteprima laterale
+                        if (previewPoster) {
+                            previewPoster.style.display = 'none';
+                            if (previewPosterPlaceholder) {
+                                previewPosterPlaceholder.style.display = 'flex';
+                            }
+                        }
+                    }
+
+                } else if (type === 'backdrop') {
+                    const backdropPreviewContainer = document.getElementById('backdropPreviewContainer');
+                    const previewBackdrop = document.getElementById('previewBackdrop');
+
+                    if (url) {
+                        // Aggiorna anteprima card
+                        if (backdropPreviewContainer) {
+                            if (!backdropPreview) {
+                                const img = document.createElement('img');
+                                img.id = 'backdropPreview';
+                                img.className = 'preview-image';
+                                img.alt = 'Backdrop';
+                                backdropPreviewContainer.prepend(img);
+
+                                if (backdropPlaceholder) {
+                                    backdropPlaceholder.style.display = 'none';
+                                }
+
+                                if (!clearBackdropBtn) {
+                                    const btn = document.createElement('button');
+                                    btn.type = 'button';
+                                    btn.className = 'btn-clear-image';
+                                    btn.id = 'clearBackdrop';
+                                    btn.innerHTML = '<i class="bi bi-x"></i>';
+                                    backdropPreviewContainer.appendChild(btn);
+
+                                    btn.addEventListener('click', function() {
+                                        backdropUrlInput.value = '';
+                                        updateMediaPreview('backdrop', '');
+                                    });
+                                }
+                            }
+
+                            document.getElementById('backdropPreview').src = url;
+                            if (backdropPlaceholder) {
+                                backdropPlaceholder.style.display = 'none';
+                            }
+                            if (clearBackdropBtn) {
+                                clearBackdropBtn.style.display = 'block';
+                            }
+                        }
+
+                        // Aggiorna anteprima laterale
+                        if (previewBackdrop) {
+                            previewBackdrop.style.backgroundImage = `url('${url}')`;
+                        }
+                    } else {
+                        // Pulisci anteprima card
+                        if (backdropPreviewContainer) {
+                            if (backdropPreview) {
+                                backdropPreview.remove();
+                            }
+                            if (backdropPlaceholder) {
+                                backdropPlaceholder.style.display = 'flex';
+                            }
+                            if (clearBackdropBtn) {
+                                clearBackdropBtn.style.display = 'none';
+                            }
+                        }
+
+                        // Pulisci anteprima laterale
+                        if (previewBackdrop) {
+                            previewBackdrop.style.backgroundImage = 'none';
+                        }
+                    }
+                }
+            }
+
+            // Carica trailer
+            function loadTrailer(url) {
+                if (!url) {
+                    trailerFrame.style.display = 'none';
+                    trailerPlaceholder.style.display = 'flex';
+                    return;
+                }
+
+                let videoId = '';
+
+                // Estrai l'ID del video YouTube dall'URL
+                const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+                const match = url.match(youtubeRegex);
+
+                if (match && match[1]) {
+                    videoId = match[1];
+                    trailerFrame.src = `https://www.youtube.com/embed/${videoId}`;
+                    trailerFrame.style.display = 'block';
+                    trailerPlaceholder.style.display = 'none';
+                } else {
+                    trailerFrame.style.display = 'none';
+                    trailerPlaceholder.style.display = 'flex';
+                    trailerPlaceholder.querySelector('p').textContent = 'URL YouTube non valido';
+                }
+            }
+
+            // Simula ricerca immagini
+            function simulateImageSearch(type) {
+                const resultsContainer = document.getElementById(type === 'poster' ? 'posterResults' : 'backdropResults');
+                resultsContainer.innerHTML = `
+                    <div class="searching-message">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Ricerca in corso...</span>
+                        </div>
+                        <p>Ricerca ${type === 'poster' ? 'poster' : 'sfondi'} in corso...</p>
+                    </div>
+                `;
+
+                // Simula un ritardo di caricamento
+                setTimeout(() => {
+                    // Genera immagini di esempio
+                    const images = [];
+                    const count = type === 'poster' ? 12 : 8;
+                    const isPortrait = type === 'poster';
+
+                    for (let i = 1; i <= count; i++) {
+                        const width = isPortrait ? 500 : 1280;
+                        const height = isPortrait ? 750 : 720;
+                        const category = isPortrait ? 'movie' : 'movie-in';
+                        images.push(`https://source.unsplash.com/random/${width}x${height}/?${category}&sig=${i}`);
+                    }
+
+                    // Crea galleria
+                    resultsContainer.innerHTML = '';
+                    const grid = document.createElement('div');
+                    grid.className = isPortrait ? 'image-grid-portrait' : 'image-grid-landscape';
+
+                    images.forEach(src => {
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'image-item';
+
+                        const img = document.createElement('img');
+                        img.src = src;
+                        img.alt = 'Image result';
+                        img.loading = 'lazy';
+
+                        const selectBtn = document.createElement('button');
+                        selectBtn.className = 'btn btn-primary btn-sm select-image';
+                        selectBtn.innerHTML = '<i class="bi bi-check-lg"></i> Seleziona';
+
+                        selectBtn.addEventListener('click', function() {
+                            if (type === 'poster') {
+                                posterUrlInput.value = src;
+                                updateMediaPreview('poster', src);
+                                postersModal.hide();
+                            } else {
+                                backdropUrlInput.value = src;
+                                updateMediaPreview('backdrop', src);
+                                backdropsModal.hide();
+                            }
+                        });
+
+                        imgContainer.appendChild(img);
+                        imgContainer.appendChild(selectBtn);
+                        grid.appendChild(imgContainer);
+                    });
+
+                    resultsContainer.appendChild(grid);
+
+                }, 1500);
+            }
+
+            // Formattazione automatica dell'analisi AI
+            const formatAnalysisBtn = document.getElementById('improveAnalysisBtn');
+            if (formatAnalysisBtn && aiTextarea) {
+                formatAnalysisBtn.addEventListener('click', function() {
+                    const originalText = aiTextarea.value;
+                    if (!originalText.trim()) {
+                        showToast('Nessun testo da formattare', 'warning');
+                        return;
+                    }
+
+                    // Aggiungiamo un effetto di elaborazione
+                    const originalBtnText = this.innerHTML;
+                    this.innerHTML = '<i class="bi bi-hourglass-split"></i> Elaborazione...';
+                    this.disabled = true;
+
+                    // Simuliamo l'elaborazione
+                    setTimeout(() => {
+                        // Formattazione di base (in una versione reale, useremmo l'AI)
+                        let formatted = originalText;
+
+                        // Aggiungi titoli in maiuscolo
+                        const paragraphs = formatted.split('\n\n');
+                        const formattedParagraphs = paragraphs.map((p, index) => {
+                            // Se è all'inizio o è un paragrafo breve che sembra un titolo
+                            if ((index === 0 || index % 4 === 0) && p.length < 80) {
+                                return p.toUpperCase();
+                            }
+                            return p;
+                        });
+
+                        formatted = formattedParagraphs.join('\n\n');
+
+                        // Aggiungi punti elenco
+                        if (!formatted.includes('\n- ')) {
+                            const pointsIndex = Math.floor(formatted.length * 0.4);
+                            const firstHalf = formatted.substring(0, pointsIndex);
+                            const secondHalf = formatted.substring(pointsIndex);
+
+                            // Trova un paragrafo adatto per inserire i punti elenco
+                            const paragraphs = secondHalf.split('\n\n');
+                            if (paragraphs.length > 1) {
+                                paragraphs[1] = "I punti salienti di questo film:\n\n- " +
+                                              paragraphs[1].split('. ').join('\n- ');
+                                formatted = firstHalf + '\n\n' + paragraphs.join('\n\n');
+                            }
+                        }
+
+                        aiTextarea.value = formatted;
+
+                        // Ripristina il pulsante
+                        this.innerHTML = originalBtnText;
+                        this.disabled = false;
+
+                        showToast('Analisi migliorata con successo', 'success');
+                    }, 1500);
+                });
+            }
+
+            // Mostra notifiche toast
+            function showToast(message, type = 'info') {
+                // Crea container se non esiste
+                let toastContainer = document.querySelector('.toast-container');
+                if (!toastContainer) {
+                    toastContainer = document.createElement('div');
+                    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                    document.body.appendChild(toastContainer);
+                }
+
+                // Crea toast
+                const toastId = 'toast-' + Date.now();
+                let iconClass;
+                let bgClass;
+
+                switch (type) {
+                    case 'success':
+                        iconClass = 'bi-check-circle-fill';
+                        bgClass = 'bg-success';
+                        break;
+                    case 'warning':
+                        iconClass = 'bi-exclamation-triangle-fill';
+                        bgClass = 'bg-warning';
+                        break;
+                    case 'error':
+                        iconClass = 'bi-x-circle-fill';
+                        bgClass = 'bg-danger';
+                        break;
+                    default:
+                        iconClass = 'bi-info-circle-fill';
+                        bgClass = 'bg-info';
+                }
+
+                const toastHtml = `
+                    <div id="${toastId}" class="toast align-items-center ${bgClass} text-white" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi ${iconClass} me-2"></i> ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+                // Inizializza e mostra toast
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, {
+                    delay: 3000
+                });
+                toast.show();
+
+                // Rimuovi dopo la chiusura
+                toastElement.addEventListener('hidden.bs.toast', function() {
+                    this.remove();
+                });
+            }
+        });
+    </script>
+}
+@section Styles {
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-dark: #3a0ca3;
+            --secondary: #6c757d;
+            --success: #38b000;
+            --info: #3a86ff;
+            --warning: #ffbe0b;
+            --danger: #e5383b;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --border-radius: 0.375rem;
+            --border-radius-sm: 0.25rem;
+            --border-radius-lg: 0.5rem;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: padding-right 0.3s ease;
+        }
+
+            body.preview-active {
+                padding-right: 400px; /* Larghezza del panel di anteprima */
+            }
+
+        /* ===== HEADER ===== */
+        .edit-movie-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--gray-800);
+        }
+
+        .title-icon {
+            color: var(--primary);
+        }
+
+        .breadcrumb {
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+            .breadcrumb a {
+                color: var(--primary);
+                text-decoration: none;
+            }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .edit-movie-container {
+            display: flex;
+            flex-direction: row;
+            position: relative;
+            min-height: 70vh;
+        }
+
+        /* ===== EDITOR PANEL ===== */
+        .editor-panel {
+            flex: 1;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: width 0.3s ease;
+        }
+
+        .edit-tabs {
+            padding: 0 1rem;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .nav-tabs {
+            border: none;
+        }
+
+            .nav-tabs .nav-link {
+                border: none;
+                color: var(--gray-700);
+                padding: 1rem 1.25rem;
+                margin-right: 0.5rem;
+                border-radius: 0;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                border-bottom: 2px solid transparent;
+                transition: all 0.2s ease;
+            }
+
+                .nav-tabs .nav-link:hover {
+                    color: var(--primary);
+                    background-color: rgba(67, 97, 238, 0.05);
+                    border-bottom-color: rgba(67, 97, 238, 0.3);
+                }
+
+                .nav-tabs .nav-link.active {
+                    color: var(--primary);
+                    background-color: rgba(67, 97, 238, 0.08);
+                    border-bottom-color: var(--primary);
+                    font-weight: 600;
+                }
+
+        .tab-content {
+            padding: 0;
+        }
+
+        .tab-pane {
+            padding: 0;
+        }
+
+        .form-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+            .form-section:last-child {
+                border-bottom: none;
+            }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+            .form-group:last-child {
+                margin-bottom: 0;
+            }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: var(--gray-800);
+            background-color: white;
+            background-clip: padding-box;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+            .form-control:focus {
+                border-color: var(--primary-light);
+                outline: 0;
+                box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+            }
+
+        .form-hint {
+            display: block;
+            margin-top: 0.25rem;
+            font-size display: block;
+            margin-top: 0.25rem;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .input-group > .form-control {
+            position: relative;
+            flex: 1 1 auto;
+            width: 1%;
+            min-width: 0;
+        }
+
+        .input-group-text {
+            display: flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: var(--gray-600);
+            text-align: center;
+            white-space: nowrap;
+            background-color: var(--gray-100);
+            border: 1px solid var(--gray-300);
+        }
+
+        .input-group > :not(:first-child) {
+            margin-left: -1px;
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+
+        .input-group > :first-child {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        /* Validation styles */
+        .validation-summary {
+            color: var(--danger);
+            padding: 1rem;
+            border: 1px solid rgba(229, 56, 59, 0.2);
+            border-radius: var(--border-radius);
+            background-color: rgba(229, 56, 59, 0.05);
+            margin-bottom: 1rem;
+        }
+
+        .validation-message {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: var(--danger);
+        }
+
+        /* Verification toggle */
+        .verification-toggle {
+            background-color: var(--gray-100);
+            padding: 1rem 1.25rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-300);
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .toggle-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toggle-info span {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .switch-toggle {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-text {
+            margin-left: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .form-check-input[type="checkbox"]:checked ~ .status-text::after {
+            content: attr(data-on);
+            color: var(--success);
+        }
+
+        .form-check-input[type="checkbox"]:not(:checked) ~ .status-text::after {
+            content: attr(data-off);
+            color: var(--gray-500);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        /* ===== MEDIA TAB ===== */
+        .poster-backdrop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .media-preview {
+            margin-bottom: 1rem;
+        }
+
+        .preview-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            background-color: var(--gray-100);
+            border: 1px solid var(--gray-300);
+        }
+
+        .preview-container.backdrop {
+            aspect-ratio: 16/9;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .no-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            color: var(--gray-500);
+            text-align: center;
+        }
+
+        .no-image i {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .media-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-clear-image {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: var(--gray-700);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-clear-image:hover {
+            background-color: white;
+            color: var(--danger);
+            transform: scale(1.1);
+        }
+
+        /* ===== DESCRIPTION EDITOR ===== */
+        .description-editor {
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            background-color: var(--gray-100);
+            border-bottom: 1px solid var(--gray-300);
+        }
+
+        .toolbar-btn {
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 1.5rem;
+            background-color: var(--gray-300);
+            margin: 0 0.5rem;
+        }
+
+        .description-textarea {
+            border: none;
+            border-radius: 0;
+            padding: 1rem;
+            min-height: 300px;
+        }
+
+        .description-textarea:focus {
+            box-shadow: none;
+        }
+
+        .text-stats {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        .stat {
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .stat-value {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        /* ===== AI ANALYSIS ===== */
+        .ai-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.25rem;
+        }
+
+        .ai-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .ai-info i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-top: 0.25rem;
+        }
+
+        .ai-info h5 {
+            margin: 0 0 0.35rem 0;
+            font-weight: 600;
+        }
+
+        .ai-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            max-width: 450px;
+        }
+
+        .ai-content {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .ai-textarea {
+            flex: 1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .ai-tools {
+            width: 220px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .tool-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn-tool, .btn-focus {
+            font-size: 0.9rem;
+        }
+
+        /* ===== FORM ACTIONS ===== */
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 1.5rem;
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .primary-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .secondary-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        /* ===== PREVIEW PANEL ===== */
+        .preview-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.preview-active .preview-panel {
+            right: 0;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            background-color: var(--gray-50);
+        }
+
+        .preview-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .movie-preview {
+            position: relative;
+        }
+
+        .preview-backdrop {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .backdrop-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            filter: blur(1px);
+        }
+
+        .backdrop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8));
+        }
+
+        .preview-main {
+            position: relative;
+            margin-top: -100px;
+            padding: 0 1.5rem 2rem;
+            color: white;
+            z-index: 2;
+        }
+
+        .preview-poster-container {
+            width: 120px;
+            height: 180px;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .preview-poster {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-poster-placeholder {
+            width: 100%;
+            height: 100%;
+            background-color: var(--gray-400);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .preview-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .preview-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .preview-year {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .preview-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: #ffbe0b;
+        }
+
+        .preview-genres {
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .genre-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            background-color: rgba(255,255,255,0.15);
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            backdrop-filter: blur(5px);
+        }
+
+        .preview-description {
+            color: var(--gray-800);
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-trailer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Preview stats */
+        .preview-stats {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-item {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .stat-icon.reviews {
+            background-color: rgba(58, 134, 255, 0.15);
+            color: var(--info);
+        }
+
+        .stat-icon.favorites {
+            background-color: rgba(229, 56, 59, 0.15);
+            color: var(--danger);
+        }
+
+        .stat-icon.views {
+            background-color: rgba(56, 176, 0, 0.15);
+            color: var(--success);
+        }
+
+        .stat-content h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .stat-content p {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            margin: 0;
+        }
+
+        /* ===== MODAL STYLES ===== */
+        .modal-content {
+            border: none;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background-color: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .delete-warning {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .delete-warning i {
+            font-size: 3rem;
+            color: var(--warning);
+            margin-bottom: 1rem;
+        }
+
+        .trailer-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .trailer-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .trailer-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--gray-800);
+            color: white;
+        }
+
+        .trailer-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        /* Search image modals */
+        .search-controls {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            padding: 1rem 0;
+            background: white;
+        }
+
+        .searching-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            color: var(--gray-700);
+        }
+
+        .searching-message .spinner-border {
+            margin-bottom: 1rem;
+        }
+
+        .image-grid-portrait {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .image-grid-landscape {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .image-item {
+            position: relative;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .image-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .select-image {
+            position: absolute;
+            bottom: 0.75rem;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+
+        .image-item:hover .select-image {
+            opacity: 1;
+        }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            z-index: 9999;
+        }
+        /* Stili per la tab dell'analisi AI */
+        .ai-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ai-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+            .ai-info i {
+                font-size: 2rem;
+                color: #6c5ce7;
+                background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            .ai-info h5 {
+                margin-bottom: 0.25rem;
+                font-weight: 600;
+            }
+
+            .ai-info p {
+                margin-bottom: 0;
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+            }
+
+        /* Layout del pannello analisi AI */
+        .ai-analysis-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Anteprima dell'analisi */
+        .ai-preview {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--bg-subtle);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .ai-preview-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .ai-preview-header h5 {
+                margin-bottom: 0;
+                font-weight: 600;
+                font-size: 0.95rem;
+            }
+
+        .ai-badges {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(162, 155, 254, 0.1) 100%);
+            color: #6c5ce7;
+        }
+
+            .ai-badge i {
+                font-size: 0.85rem;
+            }
+
+        .ai-preview-content {
+            padding: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .ai-preview-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        .ai-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+            .ai-empty-state i {
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+                opacity: 0.6;
+            }
+
+            .ai-empty-state p {
+                font-size: 1.1rem;
+                font-weight: 500;
+                margin-bottom: 0.5rem;
+            }
+
+            .ai-empty-state span {
+                font-size: 0.9rem;
+                opacity: 0.8;
+            }
+
+        /* Editor dell'analisi */
+        .ai-editor {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--bg-subtle);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-editor-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .ai-editor-header h5 {
+                margin-bottom: 0;
+                font-weight: 600;
+                font-size: 0.95rem;
+            }
+
+        .ai-editor-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ai-textarea-container {
+            padding: 1rem;
+            flex-grow: 1;
+        }
+
+        .ai-textarea {
+            width: 100%;
+            resize: none;
+            border-color: var(--border-color);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            background-color: var(--bg-primary);
+        }
+
+            .ai-textarea:focus {
+                border-color: #6c5ce7;
+                box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+            }
+
+        /* Strumenti di editing */
+        .ai-tools-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+        }
+
+        .ai-tools-header {
+            margin-bottom: 0.75rem;
+        }
+
+            .ai-tools-header h6 {
+                margin-bottom: 0.25rem;
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
+
+        .ai-tools-info {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .ai-tools-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .tool-group {
+            margin-bottom: 1rem;
+        }
+
+            .tool-group label {
+                font-size: 0.85rem;
+                font-weight: 500;
+                margin-bottom: 0.5rem;
+                color: var(--text-primary);
+            }
+
+        .btn-tool,
+        .btn-focus {
+            margin-bottom: 0.25rem;
+            font-size: 0.85rem;
+            border-color: var(--border-color);
+            text-align: left;
+        }
+
+            .btn-tool i,
+            .btn-focus i {
+                margin-right: 0.5rem;
+            }
+
+            .btn-tool:hover,
+            .btn-focus:hover {
+                background-color: var(--bg-hover);
+                border-color: var(--border-hover);
+            }
+
+ 
+
+        /* Modalità scura */
+        [data-bs-theme=dark] .ai-preview,
+        [data-bs-theme=dark] .ai-editor {
+            background-color: var(--dm-bg-subtle);
+        }
+
+        [data-bs-theme=dark] .ai-preview-header,
+        [data-bs-theme=dark] .ai-editor-header,
+        [data-bs-theme=dark] .ai-tools-container {
+            background-color: var(--dm-bg-primary);
+        }
+
+        [data-bs-theme=dark] .ai-textarea {
+            background-color: var(--dm-bg-primary);
+            color: var(--dm-text-primary);
+        }
+    </style>
+}
